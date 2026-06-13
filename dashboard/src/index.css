@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * ── PoolProxy theme tokens ──────────────────────────────────────────────
+ * ── RaiProxy theme tokens ──────────────────────────────────────────────
  * Dark is the default (defined on :root). Light mode is applied by adding
  * the `.light` class to <html> (see the no-flash script in index.html and
  * the ThemeProvider). Every token has a value in BOTH schemes.

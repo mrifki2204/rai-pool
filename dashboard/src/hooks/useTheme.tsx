@@ -9,7 +9,7 @@ import {
 
 export type Theme = "dark" | "light";
 
-const STORAGE_KEY = "poolprox-theme";
+const STORAGE_KEY = "raiprox-theme";
 
 interface ThemeContextValue {
   theme: Theme;

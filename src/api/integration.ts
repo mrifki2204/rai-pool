@@ -135,7 +135,7 @@ integrationRouter.post("/apply-config", async (c) => {
 
     // Get current API key
     const apiKeyRow = await db.select().from(settings).where(eq(settings.key, "api_key"));
-    const apiKey = apiKeyRow[0]?.value || process.env.API_KEY || "pool-proxy-secret-key";
+    const apiKey = apiKeyRow[0]?.value || process.env.API_KEY || "rai-proxy-secret-key";
 
     // Use frontend-provided base URL, fall back to localhost with config port
     // Strip /v1 suffix and trailing slashes so Claude CLI appends its own paths
@@ -213,7 +213,7 @@ async function buildProxyInfo(body: {
     .from(settings)
     .where(eq(settings.key, "api_key"));
   const apiKey =
-    apiKeyRow[0]?.value || process.env.API_KEY || "pool-proxy-secret-key";
+    apiKeyRow[0]?.value || process.env.API_KEY || "rai-proxy-secret-key";
   const proxyOrigin = body.baseUrl || `http://localhost:${config.port}`;
   const openaiBaseUrl = `${proxyOrigin}/v1`;
   const modelId = body.modelId || "kp-sonnet-4.6";

@@ -6,7 +6,7 @@ import path from "path";
 
 function spaFallback(): Plugin {
   return {
-    name: "pool-proxy-spa-fallback",
+    name: "rai-proxy-spa-fallback",
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
         const url = req.url || "/";

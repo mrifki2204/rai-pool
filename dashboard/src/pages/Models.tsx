@@ -44,6 +44,7 @@ function formatContext(n: number | undefined): string {
 export default function Models() {
   const [models, setModels] = useState<ModelData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const { message: copiedModel, setMessage: setCopiedModel } = useTimedMessage<string>(null, 1500);
@@ -53,7 +54,10 @@ export default function Models() {
       .then((res: { data: ModelData[] }) => {
         setModels(res.data || []);
       })
-      .catch(() => setModels([]))
+      .catch(() => {
+        setModels([]);
+        setError("Failed to load models");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -83,6 +87,15 @@ export default function Models() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <div className="text-sm text-red-400">{error}</div>
+        <button onClick={() => { setError(null); setLoading(true); fetchModels().then((res: { data: ModelData[] }) => setModels(res.data || [])).catch(() => setError("Failed to load models")).finally(() => setLoading(false)); }} className="text-xs text-[var(--primary)] hover:underline">Retry</button>
       </div>
     );
   }

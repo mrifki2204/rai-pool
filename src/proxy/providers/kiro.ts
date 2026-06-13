@@ -449,8 +449,8 @@ export class KiroProvider extends BaseProvider {
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${tokens.access_token}`,
-        "User-Agent": "KiroIDE/compatible pool-proxy/1.0.0",
-        "x-amz-user-agent": "pool-proxy/1.0.0",
+        "User-Agent": "KiroIDE/compatible rai-proxy/1.0.0",
+        "x-amz-user-agent": "rai-proxy/1.0.0",
       },
     }, config.providerQuotaTimeoutMs);
   }
@@ -593,8 +593,8 @@ export class KiroProvider extends BaseProvider {
       "X-Amz-Target": "AmazonCodeWhisperStreamingService.GenerateAssistantResponse",
       "x-amzn-codewhisper-optout": "true",
       "x-amzn-kiro-agent-mode": "vibe",
-      "User-Agent": "KiroIDE/compatible pool-proxy/1.0.0",
-      "x-amz-user-agent": "pool-proxy/1.0.0",
+      "User-Agent": "KiroIDE/compatible rai-proxy/1.0.0",
+      "x-amz-user-agent": "rai-proxy/1.0.0",
     };
 
     // Handle -thinking suffix or reasoning_effort from request body

@@ -57,7 +57,7 @@ export default function Dashboard() {
         id: r.id,
         model: r.model || "unknown",
         provider: r.provider || "unknown",
-        status: Number(r.status || 0),
+        status: r.status === "success" ? 200 : r.status === "error" ? 500 : 0,
         durationMs: r.durationMs ? Number(r.durationMs) : null,
         totalTokens: r.totalTokens ? Number(r.totalTokens) : null,
         promptTokens: r.promptTokens ? Number(r.promptTokens) : null,

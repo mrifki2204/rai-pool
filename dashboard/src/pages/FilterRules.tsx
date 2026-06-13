@@ -42,7 +42,11 @@ export default function FilterRules() {
   const load = useCallback(async () => {
     try {
       const result = await fetchApi<FilterListResponse>("/api/filters");
-      setData(result);
+      setData({
+        count: result.count ?? 0,
+        activeCount: result.activeCount ?? 0,
+        rules: Array.isArray(result.rules) ? result.rules : [],
+      });
     } catch {
       setData({ count: 0, activeCount: 0, rules: [] });
     } finally {

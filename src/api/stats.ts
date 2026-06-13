@@ -5,6 +5,7 @@ import { desc, sql, eq } from "drizzle-orm";
 import { pool } from "../proxy/pool";
 import { config } from "../config";
 import { getAllModels } from "../proxy/router";
+import { refreshByokModels } from "../proxy/providers/registry";
 
 export const statsRouter = new Hono();
 
@@ -254,6 +255,7 @@ statsRouter.get("/models", async (c) => {
     ? sql`${usageSummary.bucket} >= ${new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()}`
     : sql`1=1`;
 
+  await refreshByokModels();
   const modelMeta = new Map(getAllModels().map((model) => [model.id, model]));
   const modelStats = await db
     .select({

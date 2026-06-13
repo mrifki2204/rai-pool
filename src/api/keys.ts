@@ -17,7 +17,7 @@ function generateApiKey(): string {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/g, "");
-  return `sk-pool-${token}`;
+  return `rai-${token}`;
 }
 
 export async function getActiveApiKey(): Promise<string> {

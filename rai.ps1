@@ -43,7 +43,8 @@ function Invoke-Start {
 
   if (Test-Running) {
     Write-Host "RAI already running (PID $(Get-Content $PidFile))" -ForegroundColor Yellow
-    Write-Host "  Server: http://localhost:$port"
+    Write-Host "  Server:     http://localhost:$port"
+    Write-Host "  Dashboard:  http://localhost:$port/"
     return
   }
 
@@ -58,13 +59,53 @@ function Invoke-Start {
     -WindowStyle Hidden -PassThru
 
   $proc.Id | Out-File -FilePath $PidFile -Encoding ascii
-  Start-Sleep -Seconds 4
 
   if (-not $proc.HasExited) {
     Write-Host "RAI started (PID $($proc.Id))" -ForegroundColor Green
-    Write-Host "  Server: http://localhost:$port"
-    Write-Host "  API Key:   $(Get-EnvValue 'API_KEY' 'pool-proxy-secret-key')"
-    Write-Host "  Logs:      .\rai.ps1 logs"
+    Write-Host ""
+
+    # Poll /api/info until the server is ready (max 15s)
+    $maxWait = 15
+    $waited = 0
+    $info = $null
+    while ($waited -lt $maxWait) {
+      Start-Sleep -Seconds 1; $waited++
+      try {
+        $info = Invoke-RestMethod -Uri "http://localhost:$port/api/info" -Method Get -TimeoutSec 2 -ErrorAction Stop
+        break
+      } catch {
+        # server not ready yet
+      }
+    }
+
+    if ($info) {
+      $apiKey = Get-EnvValue "API_KEY" "rai-proxy-secret-key"
+      Write-Host "  Server:       http://localhost:$port"
+      Write-Host "  Dashboard:    http://localhost:$port/"
+      Write-Host "  API Key:      $apiKey"
+      if ($info.models.total) {
+        Write-Host "  Models:       $($info.models.total) available"
+      }
+      if ($info.accounts) {
+        $total = $info.accounts.total
+        $active = $info.accounts.active
+        $exhausted = $info.accounts.exhausted
+        Write-Host "  Accounts:     $total total ($active active, $exhausted exhausted)"
+      }
+      if ($info.wsClients) {
+        Write-Host "  WS Clients:   $($info.wsClients)"
+      }
+      Write-Host ""
+      Write-Host "  Commands:"
+      Write-Host "    rai logs      View server logs"
+      Write-Host "    rai status    Show server status"
+      Write-Host "    rai stop      Stop the server"
+    } else {
+      Write-Host "  Server:       http://localhost:$port"
+      Write-Host "  Dashboard:    http://localhost:$port/"
+      Write-Host "  API Key:      $(Get-EnvValue 'API_KEY' 'rai-proxy-secret-key')"
+      Write-Host "  (Server starting, run 'rai status' for details)"
+    }
   } else {
     Remove-Item $PidFile -ErrorAction SilentlyContinue
     Write-Host "Failed to start. Check logs at $LogFile" -ForegroundColor Red
@@ -85,7 +126,35 @@ function Invoke-Status {
   if (Test-Running) {
     $procId = Get-Content $PidFile
     Write-Host "RAI is running (PID $procId)" -ForegroundColor Green
-    Write-Host "  Server: http://localhost:$port"
+    Write-Host ""
+
+    try {
+      $info = Invoke-RestMethod -Uri "http://localhost:$port/api/info" -Method Get -TimeoutSec 3 -ErrorAction Stop
+      $apiKey = Get-EnvValue "API_KEY" "rai-proxy-secret-key"
+      Write-Host "  Server:       http://localhost:$port"
+      Write-Host "  Dashboard:    http://localhost:$port/"
+      Write-Host "  API Key:      $apiKey"
+      if ($info.models.total) {
+        Write-Host "  Models:       $($info.models.total) available"
+      }
+      if ($info.accounts) {
+        $total = $info.accounts.total
+        $active = $info.accounts.active
+        $exhausted = $info.accounts.exhausted
+        Write-Host "  Accounts:     $total total ($active active, $exhausted exhausted)"
+      }
+      if ($info.wsClients) {
+        Write-Host "  WS Clients:   $($info.wsClients)"
+      }
+      Write-Host ""
+      Write-Host "  Commands:"
+      Write-Host "    rai logs      View server logs"
+      Write-Host "    rai stop      Stop the server"
+    } catch {
+      Write-Host "  Server:       http://localhost:$port"
+      Write-Host "  Dashboard:    http://localhost:$port/"
+      Write-Host "  (could not fetch detailed status)"
+    }
   } else {
     Write-Host "RAI is not running" -ForegroundColor Red
   }

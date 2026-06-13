@@ -143,7 +143,7 @@ export function openAIToAnthropic(response: any, request: AnthropicMessagesReque
   const toolCalls = choice?.message?.tool_calls || [];
   const content = [];
   if (reasoning) {
-    content.push({ type: "thinking", thinking: reasoning, signature: "poolprox_unsigned_reasoning_summary" });
+    content.push({ type: "thinking", thinking: reasoning, signature: "raiprox_unsigned_reasoning_summary" });
   }
   if (text) content.push({ type: "text", text });
   for (const call of toolCalls) {
@@ -277,7 +277,7 @@ export function openAIStreamToAnthropic(stream: ReadableStream<Uint8Array>, requ
           controller.enqueue(event("content_block_delta", {
             type: "content_block_delta",
             index: blockIndex,
-            delta: { type: "signature_delta", signature: "poolprox_unsigned_reasoning_summary" },
+            delta: { type: "signature_delta", signature: "raiprox_unsigned_reasoning_summary" },
           }));
           thinkingSignatureSent = true;
         }

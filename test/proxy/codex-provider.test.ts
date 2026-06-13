@@ -214,7 +214,7 @@ describe("CodexProvider streaming", () => {
 
     expect(thinkingStart).toBeDefined();
     expect(thinking).toBe("I should calculate. Then answer.");
-    expect(signature?.data.delta.signature).toBe("poolprox_unsigned_reasoning_summary");
+    expect(signature?.data.delta.signature).toBe("raiprox_unsigned_reasoning_summary");
   });
 
   test("Anthropic stream converts Codex tool_calls into tool_use", async () => {

@@ -12,12 +12,12 @@ import { isValidApiKey } from "./api/keys";
 import { dashboardAuthRouter, isValidSessionToken } from "./api/dashboard-auth";
 import { autoWarmupScheduler } from "./auth/warmup-scheduler";
 import { db } from "./db/index";
-import { filterRules } from "./db/schema";
-import { sql } from "drizzle-orm";
+import { filterRules, accounts } from "./db/schema";
+import { sql, eq } from "drizzle-orm";
 import { PUDIDIL_FILTERS } from "./proxy/filters";
 import { loadFilterCache } from "./proxy/filter-cache";
 import { ensureModelMappingTable, seedModelMappings, loadModelMappingCache } from "./proxy/model-mapping";
-import { refreshByokModels } from "./proxy/providers/registry";
+import { refreshByokModels, getAllModels } from "./proxy/providers/registry";
 
 // Run database migrations on startup
 await runMigrations();
@@ -72,7 +72,7 @@ const app = new Hono();
 app.use("*", cors());
 app.use("*", logger());
 
-// API Key authentication middleware for proxy endpoints
+// API Key / Session Token authentication for proxy endpoints
 app.use("/v1/*", async (c, next) => {
   const authHeader = c.req.header("Authorization");
   const xApiKey = c.req.header("x-api-key");
@@ -85,7 +85,10 @@ app.use("/v1/*", async (c, next) => {
     );
   }
 
-  if (!(await isValidApiKey(token))) {
+  const validApiKey = await isValidApiKey(token);
+  const validSession = !validApiKey ? await isValidSessionToken(token) : false;
+
+  if (!validApiKey && !validSession) {
     return c.json(
       { error: { message: "Invalid API key", type: "auth_error" } },
       401
@@ -135,25 +138,61 @@ app.route("/api", apiRouter); // /api/accounts, /api/settings, /api/stats
 app.route("/api/auth", authRouter); // /api/auth/login, /api/auth/queue
 app.route("/api/auth", dashboardAuthRouter); // /api/auth/dashboard-login, /api/auth/change-password
 
-// Health/info endpoint (moved from / to /api/health)
-app.get("/api/info", (c) => {
-  return c.json({
-    name: "pool-proxy",
-    version: "1.0.0",
-    status: "running",
-    endpoints: {
-      proxy: "/v1/chat/completions",
-      anthropic: "/v1/messages",
-      models: "/v1/models",
-      accounts: "/api/accounts",
-      stats: "/api/stats",
-      settings: "/api/settings",
-      auth: "/api/auth",
-      health: "/api/health",
-      websocket: "/ws",
-    },
-    wsClients: getClientCount(),
-  });
+// Health/info endpoint
+app.get("/api/info", async (c) => {
+  try {
+    const [totalRes, activeRes, exhaustedRes] = await Promise.all([
+      db.select({ total: sql<number>`COUNT(*)` }).from(accounts),
+      db.select({ active: sql<number>`COUNT(*)` }).from(accounts).where(eq(accounts.status, "active")),
+      db.select({ exhausted: sql<number>`COUNT(*)` }).from(accounts).where(eq(accounts.status, "exhausted")),
+    ]);
+    const totalAcc = Number(totalRes[0]?.total ?? 0);
+    const activeAcc = Number(activeRes[0]?.active ?? 0);
+    const exhaustedAcc = Number(exhaustedRes[0]?.exhausted ?? 0);
+    const modelCount = getAllModels().length;
+
+    return c.json({
+      name: "rai-proxy",
+      version: "1.0.0",
+      status: "running",
+      port: config.port,
+      endpoints: {
+        proxy: "/v1/chat/completions",
+        anthropic: "/v1/messages",
+        models: "/v1/models",
+        accounts: "/api/accounts",
+        stats: "/api/stats",
+        settings: "/api/settings",
+        auth: "/api/auth",
+        health: "/api/health",
+        websocket: "/ws",
+        dashboard: "/",
+      },
+      models: { total: modelCount },
+      accounts: { total: totalAcc, active: activeAcc, exhausted: exhaustedAcc },
+      wsClients: getClientCount(),
+    });
+  } catch (e) {
+    return c.json({
+      name: "rai-proxy",
+      version: "1.0.0",
+      status: "running",
+      port: config.port,
+      endpoints: {
+        proxy: "/v1/chat/completions",
+        anthropic: "/v1/messages",
+        models: "/v1/models",
+        accounts: "/api/accounts",
+        stats: "/api/stats",
+        settings: "/api/settings",
+        auth: "/api/auth",
+        health: "/api/health",
+        websocket: "/ws",
+        dashboard: "/",
+      },
+      wsClients: getClientCount(),
+    });
+  }
 });
 
 // Serve dashboard static files (SPA fallback)

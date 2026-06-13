@@ -160,10 +160,12 @@ class AccountPool {
     const resetAt = account.quotaResetAt ? new Date(account.quotaResetAt) : null;
     const currentLimit = Number(account.quotaLimit || 0);
 
-    // Check if account is server-side rate limited (exhausted within last 24 hours)
+    // Check if account is server-side rate limited (exhausted within last 24 hours
+    // but still has quota remaining — i.e., upstream HTTP 403/429, not daily limit).
+    // When quota is exhausted from daily use, quotaRemaining reaches 0 naturally.
     const updatedAt = account.updatedAt ? new Date(account.updatedAt) : null;
     const hoursSinceUpdate = updatedAt ? (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60) : Infinity;
-    const isServerRateLimited = account.status === "exhausted" && hoursSinceUpdate < 24;
+    const isServerRateLimited = account.status === "exhausted" && hoursSinceUpdate < 24 && Number(account.quotaRemaining || 0) > 0;
 
     // Initialize or reset if:
     // 1. quotaLimit === 0 (first time setup)

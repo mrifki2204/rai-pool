@@ -394,7 +394,7 @@ function wrapStreamWithUsageFinalizer(
             requestBody: prepareLogBody({
               model: context.model,
               stream: true,
-              _poolprox: {
+              _raiprox: {
                 creditSource,
                 creditUnit: providers[context.provider].getProviderCreditUnit(context.model),
                 creditRate: providers[context.provider].getProviderCreditRate(context.model),
@@ -503,7 +503,7 @@ async function handleChatCompletion(body: ChatCompletionRequest) {
     durationMs,
     requestBody: prepareLogBody({
       ...body,
-      _poolprox: {
+      _raiprox: {
         creditSource,
         creditUnit: providers[provider].getProviderCreditUnit(body.model),
         creditRate: providers[provider].getProviderCreditRate(body.model),
@@ -649,7 +649,7 @@ proxyRouter.post("/v1/chat/completions", async (c) => {
       model: mappedModel,
       status: "error",
       errorMessage,
-      requestBody: prepareLogBody({ ...body, model: mappedModel, _poolprox: { originalModel: body.model } }),
+      requestBody: prepareLogBody({ ...body, model: mappedModel, _raiprox: { originalModel: body.model } }),
       responseBody: prepareLogBody({ error: errorMessage }),
       durationMs: 0,
     }, "chat completion error");
@@ -724,7 +724,7 @@ proxyRouter.post("/v1/messages", async (c) => {
       model: mappedModel,
       status: "error",
       errorMessage,
-      requestBody: prepareLogBody({ ...body, model: mappedModel, _poolprox: { originalModel: body.model } }),
+      requestBody: prepareLogBody({ ...body, model: mappedModel, _raiprox: { originalModel: body.model } }),
       responseBody: prepareLogBody({ error: errorMessage }),
       durationMs: 0,
     }, "messages error");

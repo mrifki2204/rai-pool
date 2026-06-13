@@ -134,7 +134,6 @@ export default function BotLogs() {
   }, []);
 
   useWsEvent(liveTypes, (msg) => {
-    if (msg.type.startsWith("warmup_")) return;
     if (msg.type === "queue_complete") setQueue((c: any) => ({ ...(c || {}), ...(msg.data || {}), queued: 0, active: 0 }));
     if (msg.type === "queue_cleared") setQueue((c: any) => ({ ...(c || {}), queued: 0, active: 0 }));
     const data = msg.data || {};

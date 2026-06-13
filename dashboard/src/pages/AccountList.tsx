@@ -314,8 +314,8 @@ export default function AccountList() {
           cmp = (a.quotaRemaining ?? 0) - (b.quotaRemaining ?? 0);
           break;
         case "lastLogin": {
-          const da = new Date(a.lastLoginAt || a.lastUsedAt || 0).getTime();
-          const db = new Date(b.lastLoginAt || b.lastUsedAt || 0).getTime();
+          const da = Number(new Date(a.lastLoginAt || a.lastUsedAt || 0).getTime()) || 0;
+          const db = Number(new Date(b.lastLoginAt || b.lastUsedAt || 0).getTime()) || 0;
           cmp = da - db;
           break;
         }

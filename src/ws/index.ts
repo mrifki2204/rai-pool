@@ -18,7 +18,7 @@ export const websocketHandler = {
     ws.send(
       JSON.stringify({
         type: "connected",
-        data: { message: "Connected to pool-proxy WebSocket", clients: clients.size },
+        data: { message: "Connected to rai-proxy WebSocket", clients: clients.size },
       })
     );
     console.log(`[WS] Client connected (total: ${clients.size})`);

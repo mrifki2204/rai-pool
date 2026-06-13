@@ -129,7 +129,7 @@ function buildProxyInfo(opts: Options): ProxyConnectionInfo {
   return {
     proxyOrigin: opts.url,
     openaiBaseUrl: `${opts.url}/v1`,
-    apiKey: opts.key || "pool-proxy-secret-key",
+    apiKey: opts.key || "rai-proxy-secret-key",
     modelId: opts.model,
     models: [], // CLI doesn't have full model list, but generators still work
   };

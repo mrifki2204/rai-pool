@@ -51,8 +51,13 @@ export default function Requests() {
     setLoading(true);
     try {
       const res = await fetchRequests(1, 50, provider) as { data: RequestLog[] };
-      setLogs(res.data || []);
-    } catch { setLogs([]); }
+      const fetched = res.data || [];
+      setLogs((current) => {
+        const seen = new Map(fetched.map((r) => [r.id, r]));
+        for (const r of current) { if (!seen.has(r.id)) seen.set(r.id, r); }
+        return Array.from(seen.values());
+      });
+    } catch { /* keep existing logs */ }
     finally { setLoading(false); }
   }
 

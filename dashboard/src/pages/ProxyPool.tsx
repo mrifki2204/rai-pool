@@ -66,11 +66,11 @@ export default function ProxyPool() {
     try {
       const result = await scrapeProxies({ source: scrapeSource, country: scrapeCountry, protocol: scrapeProtocol, limit: scrapeLimit, verify: scrapeVerify });
       if (result.added > 0) {
-        setMessage(`Scraped ${result.scraped}, ${result.added} added` + (scrapeVerify ? ` (${result.verified} alive)` : "") + (result.skipped > 0 ? `, ${result.skipped} duplicates` : ""));
+        setMessage(`Scraped ${result.scraped ?? 0}, ${result.added ?? 0} added` + (scrapeVerify ? ` (${result.verified ?? 0} alive)` : "") + (result.skipped > 0 ? `, ${result.skipped ?? 0} duplicates` : ""));
       } else if (result.scraped === 0) {
         setMessage("No proxies found for that region/source");
       } else {
-        setMessage(scrapeVerify && result.verified === 0 ? `Scraped ${result.scraped} but none passed health check` : "All scraped proxies already in pool");
+        setMessage(scrapeVerify && result.verified === 0 ? `Scraped ${result.scraped ?? 0} but none passed health check` : "All scraped proxies already in pool");
       }
       loadPool();
     } catch (e: any) {

@@ -4,9 +4,9 @@ const projectRoot = path.resolve(import.meta.dir, "..");
 
 export const config = {
   port: Number(process.env.PORT) || 2002,
-  apiKey: process.env.API_KEY || "pool-proxy-secret-key",
+  apiKey: process.env.API_KEY || "rai-proxy-secret-key",
   dashboardPassword: process.env.DASHBOARD_PASSWORD || "admin",
-  databasePath: process.env.DATABASE_PATH || path.join(projectRoot, "data/poolprox3.db"),
+  databasePath: process.env.DATABASE_PATH || path.join(projectRoot, "data/rai-proxy.db"),
   authScriptPath:
     (process.env.AUTH_SCRIPT_PATH && path.resolve(projectRoot, process.env.AUTH_SCRIPT_PATH)) ||
     path.join(projectRoot, "scripts/auth/login.py"),
@@ -24,14 +24,14 @@ export const config = {
   encryptionKey:
     process.env.ENCRYPTION_KEY || "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
   headless: process.env.HEADLESS !== "false", // default true
-  logBodyEnabled: process.env.POOLPROX_LOG_BODY_ENABLED !== "false",
-  logBodyFull: process.env.POOLPROX_LOG_BODY_FULL !== "false",
-  logBodyRedact: process.env.POOLPROX_LOG_BODY_REDACT === "true",
-  logBodyMaxBytes: Number(process.env.POOLPROX_LOG_BODY_MAX_BYTES) || 65536,
-  accountCacheTtlMs: Number(process.env.POOLPROX_ACCOUNT_CACHE_TTL_MS) || 3000,
-  authProcessTimeoutMs: Number(process.env.POOLPROX_AUTH_PROCESS_TIMEOUT_MS) || 10 * 60 * 1000,
-  providerRequestTimeoutMs: Number(process.env.POOLPROX_PROVIDER_REQUEST_TIMEOUT_MS) || 120_000,
-  providerQuotaTimeoutMs: Number(process.env.POOLPROX_PROVIDER_QUOTA_TIMEOUT_MS) || 15_000,
+  logBodyEnabled: process.env.RAIPROXY_LOG_BODY_ENABLED !== "false",
+  logBodyFull: process.env.RAIPROXY_LOG_BODY_FULL !== "false",
+  logBodyRedact: process.env.RAIPROXY_LOG_BODY_REDACT === "true",
+  logBodyMaxBytes: Number(process.env.RAIPROXY_LOG_BODY_MAX_BYTES) || 65536,
+  accountCacheTtlMs: Number(process.env.RAIPROXY_ACCOUNT_CACHE_TTL_MS) || 3000,
+  authProcessTimeoutMs: Number(process.env.RAIPROXY_AUTH_PROCESS_TIMEOUT_MS) || 10 * 60 * 1000,
+  providerRequestTimeoutMs: Number(process.env.RAIPROXY_PROVIDER_REQUEST_TIMEOUT_MS) || 120_000,
+  providerQuotaTimeoutMs: Number(process.env.RAIPROXY_PROVIDER_QUOTA_TIMEOUT_MS) || 15_000,
   // Kiro Pro upgrade settings
   kiroProUpgrade: process.env.KIRO_PRO_UPGRADE === "true",
   billingAddress: JSON.parse(process.env.BILLING_ADDRESS || '{"name":"John Doe","country":"US","line1":"123 Main St","city":"New York","state":"NY","postal_code":"10001"}'),

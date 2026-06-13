@@ -235,7 +235,7 @@ export default function Accounts() {
     "warmup_queue_added", "warmup_processing",
     "warmup_complete", "warmup_success", "warmup_exhausted",
     "warmup_auth_error", "warmup_transient_error",
-    "warmup_queue_cleared"
+    "warmup_unsupported", "warmup_queue_cleared"
   ], scheduleWarmupReload);
 
   useWsEvent(["account_status"], scheduleReload);
@@ -321,6 +321,7 @@ export default function Accounts() {
           personalToken: cookieValue.trim(),
         }),
       });
+      if (res.error) throw new Error(res.error);
       showSuccess("Qoder account added successfully");
       setCookieValue("");
       setAddDialogProvider(null);
@@ -454,7 +455,6 @@ export default function Accounts() {
     try {
       await startCodexOAuthSession();
       beginCodexOAuthPolling();
-      setCodexOauthBusy(false);
       showSuccess("Auth URL ready. Open it, login, lalu paste callback URL di bawah.");
     } catch (err) {
       resetCodexOAuthFlow();

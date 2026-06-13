@@ -144,8 +144,8 @@ export default function VccPool() {
 
       setGeneratedCards(cardsWithInfo);
       setMessage(`Generated ${cardsWithInfo.length} cards`);
-    } catch (error) {
-      setMessage("Failed to generate cards");
+    } catch (error: any) {
+      setMessage(error?.message || "Failed to generate cards");
     } finally {
       setGenerating(false);
     }

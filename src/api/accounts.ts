@@ -1251,7 +1251,7 @@ accountsRouter.post("/:id/open-panel", async (c) => {
             headers: {
               Accept: "application/json",
               Authorization: `Bearer ${accessToken}`,
-              "User-Agent": "KiroIDE/compatible pool-proxy/1.0.0",
+              "User-Agent": "KiroIDE/compatible rai-proxy/1.0.0",
             },
           });
           if (usageResp.ok) {

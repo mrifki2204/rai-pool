@@ -111,7 +111,7 @@ export default function Sidebar({ onLogout, open, onClose, collapsed = false, on
         collapsed ? "flex items-center justify-center" : "flex items-center justify-between"
       )}>
         <div className="flex items-center gap-2">
-          <img src="/rai.webp" alt="RAI" className="w-8 h-8 flex-shrink-0" />
+          <img src="/rai.svg" alt="RAI" className="w-8 h-8 flex-shrink-0" />
           {!collapsed && (
             <div>
               <h1 className="text-sm font-bold text-[var(--foreground)]">RAI</h1>
