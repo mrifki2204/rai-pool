@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Save, RefreshCw, Zap, Flame, Globe, Settings2, Clock } from "lucide-react";
+import { Save, RefreshCw, Zap, Flame, Globe, Settings2, Clock, Lock } from "lucide-react";
 import {
   fetchSettings,
   updateSettings,
   fetchProviderList,
   fetchAutoWarmupStatus,
+  changePassword,
   type AutoWarmupStatus,
 } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
@@ -35,6 +36,13 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const { message, setMessage } = useTimedMessage<string>(null, 3000);
+
+  // Change password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMessage, setPwMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const providerListApi = useApi<{ data: string[] }>(fetchProviderList, []);
   const providers = useMemo(() => providerListApi.data?.data || [], [providerListApi.data]);
@@ -215,6 +223,91 @@ export default function Settings() {
             <p className="text-[11px] text-[var(--muted-foreground)]">
               Enable/disable per provider on the Accounts page. Checks active, exhausted, and error accounts.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Change Password */}
+        <Card className="border-[var(--border)] overflow-hidden">
+          <div className="h-0.5 bg-gradient-to-r from-rose-500 to-pink-500" />
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-rose-500/15 flex items-center justify-center">
+                <Lock className="w-3.5 h-3.5 text-rose-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Change Password</h3>
+            </div>
+
+            {pwMessage && (
+              <div className={`rounded-lg p-2.5 text-xs border ${pwMessage.type === "success" ? "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20" : "bg-[var(--error)]/10 text-[var(--error)] border-[var(--error)]/20"}`}>
+                {pwMessage.text}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Current Password</label>
+                <Input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => { setCurrentPassword(e.target.value); setPwMessage(null); }}
+                  placeholder="Enter current password"
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">New Password</label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setPwMessage(null); }}
+                  placeholder="Enter new password"
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Confirm New Password</label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setPwMessage(null); }}
+                  placeholder="Confirm new password"
+                  className="h-9"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                  setPwMessage({ type: "error", text: "All fields are required" });
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  setPwMessage({ type: "error", text: "New passwords do not match" });
+                  return;
+                }
+                if (newPassword.length < 4) {
+                  setPwMessage({ type: "error", text: "Password must be at least 4 characters" });
+                  return;
+                }
+                setPwSaving(true);
+                const result = await changePassword(currentPassword, newPassword);
+                if (result.success) {
+                  setPwMessage({ type: "success", text: "Password changed successfully" });
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                } else {
+                  setPwMessage({ type: "error", text: result.error || "Failed to change password" });
+                }
+                setPwSaving(false);
+              }}
+              disabled={pwSaving}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-rose-500 text-white hover:bg-rose-600 transition-all disabled:opacity-40"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              {pwSaving ? "Changing..." : "Change Password"}
+            </button>
           </CardContent>
         </Card>
 

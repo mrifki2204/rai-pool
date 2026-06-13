@@ -6,6 +6,7 @@ export const config = {
   port: Number(process.env.PORT) || 1930,
   dashboardPort: Number(process.env.DASHBOARD_PORT) || 1931,
   apiKey: process.env.API_KEY || "pool-proxy-secret-key",
+  dashboardPassword: process.env.DASHBOARD_PASSWORD || "admin",
   databasePath: process.env.DATABASE_PATH || path.join(projectRoot, "data/poolprox3.db"),
   authScriptPath:
     (process.env.AUTH_SCRIPT_PATH && path.resolve(projectRoot, process.env.AUTH_SCRIPT_PATH)) ||

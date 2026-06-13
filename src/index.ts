@@ -9,6 +9,7 @@ import { authRouter } from "./auth/index";
 import { proxyRouter } from "./proxy/index";
 import { websocketHandler, getClientCount } from "./ws/index";
 import { isValidApiKey } from "./api/keys";
+import { dashboardAuthRouter, isValidSessionToken } from "./api/dashboard-auth";
 import { autoWarmupScheduler } from "./auth/warmup-scheduler";
 import { db } from "./db/index";
 import { filterRules } from "./db/schema";
@@ -94,10 +95,11 @@ app.use("/v1/*", async (c, next) => {
   await next();
 });
 
-// API Key authentication for management API
+// API Key / Session Token authentication for management API
 app.use("/api/*", async (c, next) => {
-  // Allow health check, info, and key validation without auth
-  if (c.req.path === "/api/health" || c.req.path === "/api/info" || c.req.path === "/api/keys/test") {
+  // Allow public endpoints without auth
+  const publicPaths = ["/api/health", "/api/info", "/api/keys/test", "/api/auth/dashboard-login", "/api/auth/validate-session"];
+  if (publicPaths.includes(c.req.path)) {
     await next();
     return;
   }
@@ -106,7 +108,18 @@ app.use("/api/*", async (c, next) => {
   const apiKeyQuery = c.req.query("api_key");
   const token = authHeader?.replace("Bearer ", "") || apiKeyQuery;
 
-  if (!token || !(await isValidApiKey(token))) {
+  if (!token) {
+    return c.json(
+      { error: { message: "Unauthorized", type: "auth_error" } },
+      401
+    );
+  }
+
+  // Accept either API key (for external tools) or session token (for dashboard)
+  const validApiKey = await isValidApiKey(token);
+  const validSession = !validApiKey ? await isValidSessionToken(token) : false;
+
+  if (!validApiKey && !validSession) {
     return c.json(
       { error: { message: "Unauthorized", type: "auth_error" } },
       401
@@ -120,6 +133,7 @@ app.use("/api/*", async (c, next) => {
 app.route("/", proxyRouter); // /v1/chat/completions, /v1/models
 app.route("/api", apiRouter); // /api/accounts, /api/settings, /api/stats
 app.route("/api/auth", authRouter); // /api/auth/login, /api/auth/queue
+app.route("/api/auth", dashboardAuthRouter); // /api/auth/dashboard-login, /api/auth/change-password
 
 // Health/info endpoint (moved from / to /api/health)
 app.get("/api/info", (c) => {

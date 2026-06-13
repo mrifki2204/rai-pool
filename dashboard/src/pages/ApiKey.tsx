@@ -6,7 +6,7 @@ import { fetchApiKey, regenerateApiKey, setApiKey, testApiKey, API_BASE } from "
 import { useTimedMessage } from "@/hooks/useTimedMessage";
 
 export default function ApiKey() {
-  const [apiKey, setApiKeyState] = useState(localStorage.getItem("api_key") || "pool-proxy-secret-key");
+  const [apiKey, setApiKeyState] = useState("");
   const [source, setSource] = useState("browser");
   const [showKey, setShowKey] = useState(false);
   const { message, setMessage: setTimedMessage, clearMessage } = useTimedMessage<string>(null, 3500);
@@ -26,7 +26,6 @@ export default function ApiKey() {
   }
 
   function saveToBrowser(key = apiKey) {
-    localStorage.setItem("api_key", key);
     setApiKeyState(key);
   }
 

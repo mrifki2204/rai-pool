@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Login from "./pages/Login";
-import { isAuthenticated, validateApiKey, logout } from "./lib/api";
+import { isAuthenticated, validateSession, logout } from "./lib/api";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Accounts = lazy(() => import("./pages/Accounts"));
@@ -33,8 +33,7 @@ export default function App() {
         setAuthed(false);
         return;
       }
-      const key = localStorage.getItem("api_key")!;
-      const valid = await validateApiKey(key);
+      const valid = await validateSession();
       if (!valid) {
         logout();
         setAuthed(false);

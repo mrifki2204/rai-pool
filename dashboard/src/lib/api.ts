@@ -25,16 +25,36 @@ export function getWsBase(): string {
   return `${protocol}://${window.location.hostname}:${port}`;
 }
 
-function getApiKey(): string {
-  return localStorage.getItem("api_key") || "pool-proxy-secret-key";
+function getAuthToken(): string {
+  return localStorage.getItem("session_token") || "";
 }
 
-export async function validateApiKey(key: string): Promise<boolean> {
+export async function loginWithPassword(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
-    const res = await fetch(`${API_BASE}/api/keys/test`, {
+    const res = await fetch(`${API_BASE}/api/auth/dashboard-login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key }),
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json();
+    if (data.success && data.token) {
+      localStorage.setItem("session_token", data.token);
+      return { success: true, token: data.token };
+    }
+    return { success: false, error: data.error || "Invalid password" };
+  } catch {
+    return { success: false, error: "Connection failed" };
+  }
+}
+
+export async function validateSession(): Promise<boolean> {
+  const token = getAuthToken();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/validate-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
     });
     if (!res.ok) return false;
     const data = await res.json();
@@ -45,11 +65,32 @@ export async function validateApiKey(key: string): Promise<boolean> {
 }
 
 export function isAuthenticated(): boolean {
-  return !!localStorage.getItem("api_key");
+  return !!localStorage.getItem("session_token");
 }
 
 export function logout() {
-  localStorage.removeItem("api_key");
+  localStorage.removeItem("session_token");
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getAuthToken()}`,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await res.json();
+    if (data.success && data.token) {
+      localStorage.setItem("session_token", data.token);
+      return { success: true };
+    }
+    return { success: false, error: data.error || "Failed to change password" };
+  } catch {
+    return { success: false, error: "Connection failed" };
+  }
 }
 
 type FetchApiOptions = RequestInit & { timeoutMs?: number };
@@ -71,7 +112,7 @@ export async function fetchApi<T = any>(path: string, options?: FetchApiOptions)
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${getApiKey()}`,
+        "Authorization": `Bearer ${getAuthToken()}`,
         ...fetchOptions.headers,
       },
     });
