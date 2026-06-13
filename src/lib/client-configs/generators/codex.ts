@@ -23,16 +23,16 @@ function getCodexConfigPath(): string {
 function upsertCodexConfig(content: string, info: ProxyConnectionInfo): string {
   const newline = content.includes("\r\n") ? "\r\n" : "\n";
   const withProvider = upsertRootTomlString(
-    upsertRootTomlString(content, "model_provider", "etteum"),
+    upsertRootTomlString(content, "model_provider", "rai"),
     "model",
     info.modelId
   );
-  const withoutEtteum = removeTomlSection(
-    removeTomlSection(withProvider, "model_providers.etteum"),
-    'model_providers."etteum"'
+  const withoutRai = removeTomlSection(
+    removeTomlSection(withProvider, "model_providers.rai"),
+    'model_providers."rai"'
   );
-  const separator = withoutEtteum.trim() ? `${newline}${newline}` : "";
-  return `${withoutEtteum.trimEnd()}${separator}[model_providers.etteum]${newline}name = "Etteum Pool"${newline}base_url = "${escapeTomlString(
+  const separator = withoutRai.trim() ? `${newline}${newline}` : "";
+  return `${withoutRai.trimEnd()}${separator}[model_providers.rai]${newline}name = "RAI Pool"${newline}base_url = "${escapeTomlString(
     info.openaiBaseUrl
   )}"${newline}wire_api = "responses"${newline}`;
 }

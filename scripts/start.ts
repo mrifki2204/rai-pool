@@ -68,10 +68,11 @@ console.log(`Backend:   http://localhost:${port}`);
 console.log(`Dashboard: http://localhost:${dashboardPort}`);
 console.log(`API Key:   ${process.env.API_KEY || "pool-proxy-secret-key"}\n`);
 
-children.push(spawnProcess("backend", ["bun", "src/index.ts"]));
+children.push(spawnProcess("backend", [process.execPath, "src/index.ts"]));
 children.push(
   spawnProcess("dashboard", [
-    "bunx",
+    process.execPath,
+    "x",
     "vite",
     "--host",
     "0.0.0.0",

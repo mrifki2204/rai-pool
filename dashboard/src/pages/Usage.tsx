@@ -1,62 +1,108 @@
+import { useState, useCallback } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TokenUsage from "@/components/dashboard/TokenUsage";
-import { useEffect, useState, useRef } from "react";
-import { fetchDashboardStats, fetchModelUsage } from "@/lib/api";
-import { modelColor } from "@/lib/utils";
-import { useWsEvent } from "@/hooks/useWebSocket";
+import ModelBreakdown, { type ModelUsageItem } from "@/components/dashboard/ModelBreakdown";
+import { formatNumber } from "@/lib/utils";
+import { BarChart3, Zap, MessageSquare, Sparkles } from "lucide-react";
+
+interface TokenStats {
+  total: number;
+  prompt: number;
+  completion: number;
+  credits?: number;
+}
 
 export default function Usage() {
-  const [stats, setStats] = useState<any>(null);
-  const [modelStats, setModelStats] = useState<any[]>([]);
-  const reloadRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [period, setPeriod] = useState("7d");
+  const [stats, setStats] = useState<TokenStats>({ total: 0, prompt: 0, completion: 0, credits: 0 });
+  const [modelUsage, setModelUsage] = useState<ModelUsageItem[]>([]);
 
-  async function load() {
-    await Promise.all([
-      fetchDashboardStats().then(setStats).catch(() => setStats(null)),
-      fetchModelUsage().then((res: { data: any[] }) => setModelStats(res.data || [])).catch(() => setModelStats([])),
-    ]);
-  }
-
-  const scheduleReload = () => {
-    if (reloadRef.current) clearTimeout(reloadRef.current);
-    reloadRef.current = setTimeout(() => { load(); }, 500);
-  };
-
-  useEffect(() => {
-    load();
-    return () => { if (reloadRef.current) clearTimeout(reloadRef.current); };
+  const handleStatsUpdate = useCallback((s: TokenStats) => { setStats(s); }, []);
+  const handleModelUsageUpdate = useCallback((models: any[]) => {
+    setModelUsage(models.map((m) => ({
+      provider: m.provider || "unknown",
+      model: m.model || "unknown",
+      tokens: Number(m.tokens || 0),
+      promptTokens: Number(m.promptTokens || 0),
+      completionTokens: Number(m.completionTokens || 0),
+      credits: Number(m.credits || 0),
+      requests: Number(m.requests || 0),
+      color: m.color || "#6b7280",
+    })));
   }, []);
 
-  useWsEvent(["request_log", "request_error"], scheduleReload);
-
-  const tokenStats = {
-    total: Number(stats?.tokens?.total || 0),
-    prompt: Number(stats?.tokens?.prompt || 0),
-    completion: Number(stats?.tokens?.completion || 0),
-    credits: Number(stats?.tokens?.credits || 0),
-  };
-
-  const modelUsage = modelStats.map((m, idx) => ({
-    provider: m.provider || "unknown",
-    model: m.model || "unknown",
-    tokens: Number(m.totalTokens || 0),
-    promptTokens: Number(m.promptTokens || 0),
-    completionTokens: Number(m.completionTokens || 0),
-    credits: Number(m.credits || 0),
-    requests: Number(m.totalRequests || 0),
-    creditSource: m.creditSource || "estimated",
-    color: modelColor(`${m.provider || "unknown"}/${m.model || "unknown"}`, idx),
-  }));
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--foreground)]">Usage</h1>
-        <p className="text-sm text-[var(--muted-foreground)] mt-1">
-          Detailed token and credit usage analytics
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--chart-3)]/20 to-[var(--primary)]/10 border border-[var(--chart-3)]/20">
+            <BarChart3 className="w-5 h-5 text-[var(--chart-3)]" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--foreground)]">Usage</h1>
+            <p className="text-xs text-[var(--muted-foreground)]">Token and credit usage analytics</p>
+          </div>
+        </div>
+        <Tabs value={period} onValueChange={setPeriod}>
+          <TabsList>
+            <TabsTrigger value="1d">24h</TabsTrigger>
+            <TabsTrigger value="7d">7d</TabsTrigger>
+            <TabsTrigger value="30d">30d</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <TokenUsage stats={tokenStats} modelUsage={modelUsage} />
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-[var(--info)]/10">
+            <Zap className="w-4 h-4 text-[var(--info)]" />
+          </div>
+          <div>
+            <p className="text-[10px] text-[var(--muted-foreground)] uppercase">Total Tokens</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--foreground)]">{formatNumber(stats.total)}</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-[var(--success)]/10">
+            <MessageSquare className="w-4 h-4 text-[var(--success)]" />
+          </div>
+          <div>
+            <p className="text-[10px] text-[var(--muted-foreground)] uppercase">Prompt</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--foreground)]">{formatNumber(stats.prompt)}</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-[var(--chart-3)]/10">
+            <Sparkles className="w-4 h-4 text-[var(--chart-3)]" />
+          </div>
+          <div>
+            <p className="text-[10px] text-[var(--muted-foreground)] uppercase">Completion</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--foreground)]">{formatNumber(stats.completion)}</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-[var(--warning)]/10">
+            <Zap className="w-4 h-4 text-[var(--warning)]" />
+          </div>
+          <div>
+            <p className="text-[10px] text-[var(--muted-foreground)] uppercase">Credits</p>
+            <p className="text-lg font-bold tabular-nums text-[var(--foreground)]">{(stats.credits || 0).toFixed(2)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <TokenUsage
+        period={period}
+        onStatsUpdate={handleStatsUpdate}
+        onModelUsageUpdate={handleModelUsageUpdate}
+      />
+
+      {/* Model breakdown */}
+      <ModelBreakdown models={modelUsage} />
     </div>
   );
 }

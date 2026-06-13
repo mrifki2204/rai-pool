@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Save, RefreshCw, Zap, Flame, Globe } from "lucide-react";
+import { Save, RefreshCw, Zap, Flame, Globe, Settings2, Clock } from "lucide-react";
 import {
   fetchSettings,
   updateSettings,
@@ -22,10 +21,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 
 function labelFor(provider: string): string {
   if (PROVIDER_LABELS[provider]) return PROVIDER_LABELS[provider]!;
-  return provider
-    .split("-")
-    .map((part) => (part ? part[0]!.toUpperCase() + part.slice(1) : part))
-    .join(" ");
+  return provider.split("-").map((p) => (p ? p[0]!.toUpperCase() + p.slice(1) : p)).join(" ");
 }
 
 export default function Settings() {
@@ -36,17 +32,12 @@ export default function Settings() {
     proxy_pool_rotation: "round_robin",
   });
   const [warmupStatus, setWarmupStatus] = useState<AutoWarmupStatus | null>(null);
-  const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const { message, setMessage } = useTimedMessage<string>(null, 3000);
 
   const providerListApi = useApi<{ data: string[] }>(fetchProviderList, []);
-
-  const providers = useMemo(
-    () => providerListApi.data?.data || [],
-    [providerListApi.data]
-  );
+  const providers = useMemo(() => providerListApi.data?.data || [], [providerListApi.data]);
 
   async function load() {
     const res = (await fetchSettings()) as { data: Record<string, string> };
@@ -55,9 +46,7 @@ export default function Settings() {
     fetchAutoWarmupStatus().then(setWarmupStatus).catch(() => {});
   }
 
-  useEffect(() => {
-    load().catch(() => {});
-  }, []);
+  useEffect(() => { load().catch(() => {}); }, []);
 
   function setValue(key: string, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -65,11 +54,7 @@ export default function Settings() {
   }
 
   function lbMethodFor(provider: string): string {
-    return (
-      form[`provider_${provider}_lb_method`] ||
-      form.load_balancing_method ||
-      "round_robin"
-    );
+    return form[`provider_${provider}_lb_method`] || form.load_balancing_method || "round_robin";
   }
 
   function isOverride(provider: string): boolean {
@@ -80,132 +65,96 @@ export default function Settings() {
     setSaving(true);
     try {
       await updateSettings(form);
-      setSavedAt(new Date());
       setDirty(false);
-      setMessage("Settings saved.");
-    } finally {
-      setSaving(false);
-    }
+      setMessage("Settings saved");
+    } finally { setSaving(false); }
   }
 
   const globalMethod = form.load_balancing_method || "round_robin";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Proxy Settings</h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            Configure load balancing and auto warmup
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--info)]/10 border border-[var(--primary)]/20">
+            <Settings2 className="w-5 h-5 text-[var(--primary)]" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--foreground)]">Proxy Settings</h1>
+            <p className="text-xs text-[var(--muted-foreground)]">Load balancing, warmup, and proxy pool configuration</p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           {dirty && (
-            <span className="text-xs text-[var(--warning)] px-2 py-1 rounded bg-[var(--warning)]/10">
-              Unsaved
+            <span className="text-[10px] text-[var(--warning)] px-2 py-1 rounded-full bg-[var(--warning)]/10 font-medium">
+              Unsaved changes
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={load}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Reload
-          </Button>
-          <Button size="sm" onClick={save} disabled={saving || !dirty}>
-            <Save className="w-4 h-4 mr-2" /> {saving ? "Saving..." : "Save"}
-          </Button>
+          <button onClick={load} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--secondary)] transition-all">
+            <RefreshCw className="w-3.5 h-3.5" /> Reload
+          </button>
+          <button onClick={save} disabled={saving || !dirty} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition-all disabled:opacity-40">
+            <Save className="w-3.5 h-3.5" /> {saving ? "Saving..." : "Save"}
+          </button>
         </div>
       </div>
 
       {message && (
-        <div className="rounded-md bg-[var(--success)]/10 p-3 text-sm text-[var(--success)]">
+        <div className="rounded-lg bg-[var(--success)]/10 border border-[var(--success)]/20 p-3 text-sm text-[var(--success)]">
           {message}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Load Balancing */}
-        <Card className="border-[var(--border)]">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[var(--primary)]" />
-              Load Balancing
-            </CardTitle>
-            <CardDescription>
-              Control how requests are distributed across accounts
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--secondary)]/40 p-4 space-y-2">
-              <label className="text-sm font-medium text-[var(--foreground)]">
-                Global Method
-              </label>
+        <Card className="border-[var(--border)] overflow-hidden">
+          <div className="h-0.5 bg-gradient-to-r from-[var(--primary)] to-emerald-500" />
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-[var(--primary)]/15 flex items-center justify-center">
+                <Zap className="w-3.5 h-3.5 text-[var(--primary)]" />
+              </div>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Load Balancing</h3>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Global Method</label>
               <select
                 value={form.load_balancing_method || "round_robin"}
                 onChange={(e) => setValue("load_balancing_method", e.target.value)}
-                className="w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)]"
+                className="w-full h-9 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:outline-none"
               >
                 <option value="round_robin">Round Robin</option>
                 <option value="sequential">Sequential</option>
               </select>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                {globalMethod === "sequential"
-                  ? "Uses accounts in order, moves to next only when current is exhausted."
-                  : "Distributes requests evenly across all active accounts."}
+              <p className="text-[11px] text-[var(--muted-foreground)]">
+                {globalMethod === "sequential" ? "Uses accounts in order, moves to next when exhausted." : "Distributes requests evenly across active accounts."}
               </p>
             </div>
 
             {providers.length > 0 && (
               <div className="space-y-2">
-                <div className="text-sm font-medium text-[var(--foreground)]">
-                  Per-Provider Override
-                </div>
-                <div className="space-y-2">
+                <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Per-Provider Override</label>
+                <div className="space-y-1.5">
                   {providers.map((provider) => {
                     const key = `provider_${provider}_lb_method`;
-                    const effective = lbMethodFor(provider);
                     const overriden = isOverride(provider);
                     return (
-                      <div
-                        key={provider}
-                        className="flex items-center justify-between gap-3 p-3 rounded-lg bg-[var(--secondary)] border border-transparent hover:border-[var(--border)] transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[var(--foreground)] flex items-center gap-2">
-                            {labelFor(provider)}
-                            {overriden && (
-                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--primary)]/20 text-[var(--primary)]">
-                                override
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-[var(--muted-foreground)]">
-                            {effective === "sequential" ? "Sequential" : "Round Robin"}
-                            {!overriden && (
-                              <span className="ml-1 text-[var(--muted-foreground)]/70">
-                                (inherits global)
-                              </span>
-                            )}
-                          </p>
-                        </div>
+                      <div key={provider} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[var(--secondary)]/50 border border-[var(--border)]/50">
                         <div className="flex items-center gap-2">
-                          <select
-                            value={form[key] || ""}
-                            onChange={(e) => setValue(key, e.target.value)}
-                            className="h-8 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs text-[var(--foreground)]"
-                          >
-                            <option value="">Inherit</option>
-                            <option value="round_robin">Round Robin</option>
-                            <option value="sequential">Sequential</option>
-                          </select>
-                          {overriden && (
-                            <button
-                              type="button"
-                              onClick={() => setValue(key, "")}
-                              className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] px-2 py-1 rounded hover:bg-[var(--secondary)]"
-                              title="Clear override"
-                            >
-                              Reset
-                            </button>
-                          )}
+                          <span className="text-xs font-medium text-[var(--foreground)]">{labelFor(provider)}</span>
+                          {overriden && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] font-medium">override</span>}
                         </div>
+                        <select
+                          value={form[key] || ""}
+                          onChange={(e) => setValue(key, e.target.value)}
+                          className="h-7 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-[11px] text-[var(--foreground)]"
+                        >
+                          <option value="">Inherit</option>
+                          <option value="round_robin">Round Robin</option>
+                          <option value="sequential">Sequential</option>
+                        </select>
                       </div>
                     );
                   })}
@@ -216,19 +165,18 @@ export default function Settings() {
         </Card>
 
         {/* Auto WarmUp */}
-        <Card className="border-[var(--border)]">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Flame className="w-4 h-4 text-[var(--primary)]" />
-              Auto WarmUp
-            </CardTitle>
-            <CardDescription>
-              Automatically warm up enabled providers on a schedule
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm text-[var(--foreground)]">Interval (minutes)</label>
+        <Card className="border-[var(--border)] overflow-hidden">
+          <div className="h-0.5 bg-gradient-to-r from-amber-500 to-orange-500" />
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center">
+                <Flame className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Auto WarmUp</h3>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Interval (minutes)</label>
               <Input
                 type="number"
                 min={1}
@@ -236,94 +184,82 @@ export default function Settings() {
                 value={form.auto_warmup_interval_minutes || ""}
                 onChange={(e) => setValue("auto_warmup_interval_minutes", e.target.value)}
                 placeholder="15"
-                className="mt-1"
+                className="h-9"
               />
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                Global interval for all providers with Auto WarmUp enabled
-              </p>
             </div>
 
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--secondary)]/40 p-3 space-y-2">
-              <p className="text-xs text-[var(--muted-foreground)]">Status</p>
-              <p className="text-sm font-medium text-[var(--foreground)]">
-                {warmupStatus && warmupStatus.enabledProviders.length > 0
-                  ? `${warmupStatus.enabledProviders.length} provider${warmupStatus.enabledProviders.length === 1 ? "" : "s"} enabled`
-                  : "No provider enabled"}
-              </p>
-              {warmupStatus?.enabledProviders && warmupStatus.enabledProviders.length > 0 && (
-                <p className="text-xs text-[var(--muted-foreground)] truncate">
-                  {warmupStatus.enabledProviders.map(labelFor).join(", ")}
-                </p>
-              )}
-              {warmupStatus?.nextRunAt && (
-                <p className="text-xs text-[var(--muted-foreground)]">
-                  Next run: {new Date(warmupStatus.nextRunAt).toLocaleTimeString()}
-                </p>
-              )}
-              {savedAt && (
-                <p className="text-xs text-[var(--muted-foreground)]">
-                  Last saved: {savedAt.toLocaleTimeString()}
-                </p>
+            {/* Status */}
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--secondary)]/30 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[var(--muted-foreground)] uppercase tracking-wide">Status</span>
+                {warmupStatus?.nextRunAt && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
+                    <Clock className="w-3 h-3" />
+                    Next: {new Date(warmupStatus.nextRunAt).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              {warmupStatus && warmupStatus.enabledProviders.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {warmupStatus.enabledProviders.map((p) => (
+                    <span key={p} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--success)]/10 text-[var(--success)] font-medium">
+                      {labelFor(p)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-[var(--muted-foreground)]">No providers enabled</p>
               )}
             </div>
 
-            <p className="text-xs text-[var(--muted-foreground)]">
-              Auto WarmUp checks accounts with status active, exhausted, or error (skips pending). Enable/disable per provider on the Accounts page.
+            <p className="text-[11px] text-[var(--muted-foreground)]">
+              Enable/disable per provider on the Accounts page. Checks active, exhausted, and error accounts.
             </p>
           </CardContent>
         </Card>
 
-        {/* Proxy Pool */}
-        <Card className="border-[var(--border)]">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[var(--primary)]" />
-              Proxy Pool
-            </CardTitle>
-            <CardDescription>
-              Configure how the proxy pool is used for outgoing requests
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--secondary)]/40 p-4 space-y-2">
-              <label className="text-sm font-medium text-[var(--foreground)]">
-                Usage Scope
-              </label>
-              <select
-                value={form.proxy_pool_usage || "all"}
-                onChange={(e) => setValue("proxy_pool_usage", e.target.value)}
-                className="w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)]"
-              >
-                <option value="all">All — Model + Auth</option>
-                <option value="model">Model Only — API requests only</option>
-                <option value="auth">Auth Only — Login automation only</option>
-              </select>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                {form.proxy_pool_usage === "model"
-                  ? "Proxies are only used for upstream model API calls. Auth/login runs without proxy."
-                  : form.proxy_pool_usage === "auth"
-                    ? "Proxies are only used for login automation. Model API calls go direct."
-                    : "Proxies are used for both model API calls and login automation."}
-              </p>
+        {/* Proxy Pool Settings */}
+        <Card className="border-[var(--border)] overflow-hidden lg:col-span-2">
+          <div className="h-0.5 bg-gradient-to-r from-[var(--info)] to-violet-500" />
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-[var(--info)]/15 flex items-center justify-center">
+                <Globe className="w-3.5 h-3.5 text-[var(--info)]" />
+              </div>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Proxy Pool</h3>
             </div>
 
-            <div className="rounded-lg border border-[var(--border)] bg-[var(--secondary)]/40 p-4 space-y-2">
-              <label className="text-sm font-medium text-[var(--foreground)]">
-                Rotation Strategy
-              </label>
-              <select
-                value={form.proxy_pool_rotation || "round_robin"}
-                onChange={(e) => setValue("proxy_pool_rotation", e.target.value)}
-                className="w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)]"
-              >
-                <option value="round_robin">Round Robin</option>
-                <option value="sequential">Sequential</option>
-              </select>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                {form.proxy_pool_rotation === "sequential"
-                  ? "Uses one proxy until it fails, then moves to the next in the list."
-                  : "Distributes requests evenly across all active proxies in rotation."}
-              </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Usage Scope</label>
+                <select
+                  value={form.proxy_pool_usage || "all"}
+                  onChange={(e) => setValue("proxy_pool_usage", e.target.value)}
+                  className="w-full h-9 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:outline-none"
+                >
+                  <option value="all">All — Model + Auth</option>
+                  <option value="model">Model Only</option>
+                  <option value="auth">Auth Only</option>
+                </select>
+                <p className="text-[10px] text-[var(--muted-foreground)]">
+                  {form.proxy_pool_usage === "model" ? "Proxies for API calls only." : form.proxy_pool_usage === "auth" ? "Proxies for login only." : "Proxies for both API and login."}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Rotation Strategy</label>
+                <select
+                  value={form.proxy_pool_rotation || "round_robin"}
+                  onChange={(e) => setValue("proxy_pool_rotation", e.target.value)}
+                  className="w-full h-9 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)]/50 focus:outline-none"
+                >
+                  <option value="round_robin">Round Robin</option>
+                  <option value="sequential">Sequential</option>
+                </select>
+                <p className="text-[10px] text-[var(--muted-foreground)]">
+                  {form.proxy_pool_rotation === "sequential" ? "One proxy until fail, then next." : "Evenly distributed across proxies."}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

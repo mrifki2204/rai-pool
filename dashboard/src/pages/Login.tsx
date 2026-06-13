@@ -42,7 +42,7 @@ export default function Login({ onLogin }: LoginProps) {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)]/10">
             <Lock className="h-6 w-6 text-[var(--primary)]" />
           </div>
-          <CardTitle className="text-xl">Etteum</CardTitle>
+          <CardTitle className="text-xl">RAI</CardTitle>
           <p className="text-sm text-[var(--muted-foreground)] mt-1">
             Enter your API key to access the dashboard
           </p>

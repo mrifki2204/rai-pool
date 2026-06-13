@@ -1,73 +1,119 @@
 import { join } from "node:path";
-import { homedir } from "node:os";
+import { homedir, platform } from "node:os";
 import { readFile } from "node:fs/promises";
 import type { ProxyConnectionInfo, ClientConfigResult } from "../types";
-import { writeText, exists } from "./utils";
+import { writeText, exists, resolveDefaultModel } from "./utils";
 
+/**
+ * Hermes v0.16+ config path.
+ * On Windows: %LOCALAPPDATA%\hermes\config.yaml
+ * On macOS/Linux: ~/.hermes/config.yaml (fallback)
+ */
 function getHermesConfigPath(): string {
+  if (platform() === "win32") {
+    const localAppData = process.env.LOCALAPPDATA || join(homedir(), "AppData", "Local");
+    return join(localAppData, "hermes", "config.yaml");
+  }
   return join(homedir(), ".hermes", "config.yaml");
+}
+
+function getHermesEnvPath(): string {
+  if (platform() === "win32") {
+    const localAppData = process.env.LOCALAPPDATA || join(homedir(), "AppData", "Local");
+    return join(localAppData, "hermes", ".env");
+  }
+  return join(homedir(), ".hermes", ".env");
 }
 
 export async function configureHermes(
   info: ProxyConnectionInfo
 ): Promise<Omit<ClientConfigResult, "client">> {
   const configPath = getHermesConfigPath();
+  const envPath = getHermesEnvPath();
+  const defaultModel = resolveDefaultModel(info);
+
   try {
+    // ── 1. Update config.yaml ──
     const existing = (await exists(configPath))
       ? await readFile(configPath, "utf-8")
       : "";
     const newline = existing.includes("\r\n") ? "\r\n" : "\n";
 
-    const modelsYaml = info.models
-      .map((m) => {
-        const ctx =
-          typeof m.maxInputTokens === "number" && m.maxInputTokens > 0
-            ? m.maxInputTokens
-            : 200000;
-        return `      ${m.id}:${newline}        context_length: ${ctx}`;
-      })
-      .join(newline);
+    let content = existing;
 
-    const providerBlock = [
-      `  - name: etteum`,
-      `    base_url: ${info.openaiBaseUrl}`,
-      `    api_key: ${info.apiKey}`,
-      `    model: ${info.modelId}`,
-      `    models:`,
-      modelsYaml,
+    // Update model section (Hermes v0.16 format)
+    const modelBlock = [
+      `model:`,
+      `  default: ${defaultModel}`,
+      `  provider: custom`,
+      `  base_url: ${info.openaiBaseUrl}`,
+      `  api_key: ${info.apiKey}`,
     ].join(newline);
 
-    let content = existing;
-    const kiroProviderRegex = /^\s*- name:\s*etteum\b[\s\S]*?(?=^\s*- name:|^[a-z]|$)/gm;
-    if (kiroProviderRegex.test(content)) {
-      content = content.replace(kiroProviderRegex, providerBlock + newline);
-    } else if (content.includes("custom_providers:")) {
+    // Replace existing model: block or prepend
+    if (/^model:/m.test(content)) {
+      // Match model: line and all following indented lines (handles \r\n and \n)
       content = content.replace(
-        /(custom_providers:\s*)/,
-        `$1${newline}${providerBlock}${newline}`
+        /^model:[ \t]*\r?\n(?:[ \t]+[^\r\n]*\r?\n)*/m,
+        modelBlock + newline
       );
     } else {
-      content = `${content.trimEnd()}${newline}${newline}custom_providers:${newline}${providerBlock}${newline}`;
+      content = `${modelBlock}${newline}${content}`;
     }
 
-    const modelSection = `model:${newline}  default: "etteum/${info.modelId}"${newline}  provider: "etteum"${newline}`;
-    if (/^model:/m.test(content)) {
-      content = content.replace(/^model:.*(?:\n(?=\s).*)*$/m, modelSection.trimEnd());
+    const configBackups = await writeText(configPath, content);
+
+    // ── 2. Update .env ──
+    let envContent = (await exists(envPath))
+      ? await readFile(envPath, "utf-8")
+      : "";
+
+    // Update or add OPENAI_API_KEY
+    if (/^OPENAI_API_KEY=/m.test(envContent)) {
+      envContent = envContent.replace(/^OPENAI_API_KEY=.*/m, `OPENAI_API_KEY=${info.apiKey}`);
     } else {
-      content = `${content.trimEnd()}${newline}${newline}${modelSection}`;
+      envContent = `OPENAI_API_KEY=${info.apiKey}${newline}${envContent}`;
     }
 
-    const backups = await writeText(configPath, content);
+    // Update or add OPENAI_BASE_URL
+    if (/^OPENAI_BASE_URL=/m.test(envContent)) {
+      envContent = envContent.replace(/^OPENAI_BASE_URL=.*/m, `OPENAI_BASE_URL=${info.openaiBaseUrl}`);
+    } else {
+      const insertAfterKey = envContent.indexOf("OPENAI_API_KEY=");
+      if (insertAfterKey !== -1) {
+        const lineEnd = envContent.indexOf("\n", insertAfterKey);
+        if (lineEnd !== -1) {
+          envContent = envContent.slice(0, lineEnd + 1) + `OPENAI_BASE_URL=${info.openaiBaseUrl}${newline}` + envContent.slice(lineEnd + 1);
+        } else {
+          envContent += `${newline}OPENAI_BASE_URL=${info.openaiBaseUrl}`;
+        }
+      } else {
+        envContent = `OPENAI_BASE_URL=${info.openaiBaseUrl}${newline}${envContent}`;
+      }
+    }
+
+    await writeText(envPath, envContent);
+
+    // ── 3. Build preview ──
+    const previewYaml = [
+      `# ${configPath}`,
+      modelBlock,
+      ``,
+      `# ${envPath}`,
+      `# OPENAI_API_KEY=${info.apiKey}`,
+      `# OPENAI_BASE_URL=${info.openaiBaseUrl}`,
+    ].join(newline);
+
     return {
       success: true,
-      preview: { yaml: content },
-      paths: [configPath],
-      backupPaths: backups,
+      preview: { yaml: previewYaml },
+      paths: [configPath, envPath],
+      backupPaths: configBackups,
     };
   } catch (error) {
     return {
       success: false,
-      paths: [configPath],
+      paths: [configPath, envPath],
       backupPaths: [],
       error: error instanceof Error ? error.message : String(error),
     };

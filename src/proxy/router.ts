@@ -23,14 +23,52 @@ function requestHasImages(request: ChatCompletionRequest): boolean {
 }
 
 /**
+ * Patterns that identify a system prompt as belonging to a known AI agent/CLI.
+ * When matched, the entire system message is replaced with a clean generic prompt.
+ */
+const AGENT_PROMPT_PATTERNS: RegExp[] = [
+  /llm should respond in/i,
+  /you are (?:claude|codex|windsurf|cline|aider|continue|copilot|cody)/i,
+  /you are an? (?:autonomous )?(?:ai )?(?:coding|code )?(?:agent|assistant)/i,
+  /your task is to (?:help|assist)/i,
+  /cc_entrypoint/i,
+  /claude.?code/i,
+  /anthropic/i,
+  /anxthxropic/i,
+  /billing.?header/i,
+  /feedback.*github.*issues/i,
+  /you have access to.*tools/i,
+  /tool.?use.*(?:bash|shell|terminal|file|edit|write|search|read|fetch)/i,
+];
+
+const GENERIC_SYSTEM_PROMPT = "You are a helpful AI assistant.";
+
+function isAgentSystemPrompt(content: string): boolean {
+  return AGENT_PROMPT_PATTERNS.some((p) => p.test(content));
+}
+
+/**
  * Sanitize request by applying pudidil filters to all text content.
  * Strips Claude Code identity, billing headers, and other patterns
  * that trigger content moderation on upstream providers.
+ * System messages matching known agent patterns are replaced entirely.
  */
 function sanitizeRequest(request: ChatCompletionRequest): ChatCompletionRequest {
   const sanitized = { ...request };
 
   sanitized.messages = request.messages.map((msg) => {
+    if (msg.role === "system" && typeof msg.content === "string") {
+      if (isAgentSystemPrompt(msg.content)) {
+        return { ...msg, content: GENERIC_SYSTEM_PROMPT };
+      }
+      const filtered = applyPudidilFilters(msg.content);
+      const originalLen = msg.content.length;
+      const filteredLen = filtered.length;
+      if (originalLen > 500 && filteredLen < originalLen * 0.6) {
+        return { ...msg, content: GENERIC_SYSTEM_PROMPT };
+      }
+      return { ...msg, content: filtered };
+    }
     if (typeof msg.content === "string") {
       return { ...msg, content: applyPudidilFilters(msg.content) };
     }

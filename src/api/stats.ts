@@ -98,15 +98,34 @@ statsRouter.get("/", async (c) => {
 
 /**
  * GET /api/stats/requests - Get recent request logs (from request_logs, max 500)
+ * Excludes requestBody/responseBody for performance — use /requests/:id for full detail.
  */
 statsRouter.get("/requests", async (c) => {
   const limit = clampNumber(c.req.query("limit"), 50, 1, 500);
   const offset = clampNumber(c.req.query("offset"), 0, 0, 100_000);
   const provider = c.req.query("provider");
 
+  const columns = {
+    id: requestLogs.id,
+    accountId: requestLogs.accountId,
+    provider: requestLogs.provider,
+    model: requestLogs.model,
+    promptTokens: requestLogs.promptTokens,
+    completionTokens: requestLogs.completionTokens,
+    totalTokens: requestLogs.totalTokens,
+    creditsUsed: requestLogs.creditsUsed,
+    status: requestLogs.status,
+    durationMs: requestLogs.durationMs,
+    errorMessage: requestLogs.errorMessage,
+    accountEmail: requestLogs.accountEmail,
+    accountQuotaBefore: requestLogs.accountQuotaBefore,
+    accountQuotaAfter: requestLogs.accountQuotaAfter,
+    createdAt: requestLogs.createdAt,
+  };
+
   const baseQuery = provider
-    ? db.select().from(requestLogs).where(eq(requestLogs.provider, provider))
-    : db.select().from(requestLogs);
+    ? db.select(columns).from(requestLogs).where(eq(requestLogs.provider, provider))
+    : db.select(columns).from(requestLogs);
 
   const logs = await baseQuery
     .orderBy(desc(requestLogs.createdAt))

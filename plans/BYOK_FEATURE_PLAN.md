@@ -1,7 +1,7 @@
 # BYOK (Bring Your Own Key) Feature Plan
 
 ## Overview
-Tambahkan fitur BYOK agar user bisa menggunakan custom provider lain (OpenRouter, Together, Groq, DeepSeek, local LLM, dll) melalui Etteum Pool. Support OpenAI dan Anthropic API formats.
+Tambahkan fitur BYOK agar user bisa menggunakan custom provider lain (OpenRouter, Together, Groq, DeepSeek, local LLM, dll) melalui RAI Pool. Support OpenAI dan Anthropic API formats.
 
 ## Architecture Decision
 
@@ -550,7 +550,7 @@ Add section:
 ```markdown
 ## BYOK (Bring Your Own Key)
 
-Use custom AI providers through Etteum Pool:
+Use custom AI providers through RAI Pool:
 
 ### Setup
 

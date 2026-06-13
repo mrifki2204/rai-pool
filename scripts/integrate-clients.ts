@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 /**
- * Etteum Pool — Client Integration CLI
+ * RAI Pool — Client Integration CLI
  *
  * Detects installed AI coding clients and configures them to use the
- * etteum-pool proxy. Run from any machine; only needs the proxy URL and API key.
+ * rai-pool proxy. Run from any machine; only needs the proxy URL and API key.
  *
  * Usage:
  *   bun scripts/integrate-clients.ts
@@ -157,7 +157,7 @@ async function restoreAllBackups() {
 
     const backups = files
       .filter((f) =>
-        f.startsWith(path.basename(configPath) + ".etteum-backup-")
+        f.startsWith(path.basename(configPath) + ".rai-backup-")
       )
       .sort()
       .reverse();
@@ -248,7 +248,7 @@ async function interactiveMode(info: ProxyConnectionInfo) {
     }
   }
 
-  console.log("\nDone! Your tools should now route through etteum-pool.\n");
+  console.log("\nDone! Your tools should now route through rai-pool.\n");
 }
 
 // ── Main ────────────────────────────────────────────────────────
@@ -258,11 +258,11 @@ async function main() {
 
   if (opts.help) {
     console.log(`
-Etteum Pool — Client Integration CLI
-=====================================
+RAI Pool — Client Integration CLI
+==================================
 
 Detects installed AI coding clients and configures them to use the
-etteum-pool proxy. Sets proxy URL, API key, and default model.
+rai-pool proxy. Sets proxy URL, API key, and default model.
 
 Usage:
   bun scripts/integrate-clients.ts [options]
@@ -373,7 +373,7 @@ Supported clients:
   }
 
   if (!opts.dryRun) {
-    console.log("Done! Your tools should now route through etteum-pool.");
+    console.log("Done! Your tools should now route through rai-pool.");
     console.log("To restore original configs, run:");
     console.log("  bun scripts/integrate-clients.ts --restore\n");
   }

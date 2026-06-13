@@ -22,7 +22,7 @@ export async function configureOpenClaw(
     const models = ensureObjectField(config, "models");
     if (typeof models.mode !== "string") models.mode = "merge";
     const providers = ensureObjectField(models, "providers");
-    providers.etteum = {
+    providers.rai = {
       base_url: info.openaiBaseUrl,
       api_key: info.apiKey,
       api: "openai-chat",
@@ -39,7 +39,7 @@ export async function configureOpenClaw(
     const agents = ensureObjectField(config, "agents");
     const defaults = ensureObjectField(agents, "defaults");
     const defaultModel = resolveDefaultModel(info);
-    defaults.model = { primary: `etteum/${defaultModel}`, fallbacks: [] };
+    defaults.model = { primary: `rai/${defaultModel}`, fallbacks: [] };
 
     const backups = info.preview ? [] : await writeJsonObject(configPath, config);
     return {

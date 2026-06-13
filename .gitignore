@@ -31,8 +31,8 @@ _.log
 *.log
 .poolprox.log
 .poolprox.pid
-.etteum.log
-.etteum.pid
+.rai.log
+.rai.pid
 .aiproxy.log
 .aiproxy.pid
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json

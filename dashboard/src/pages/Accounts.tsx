@@ -11,10 +11,11 @@ import {
   DialogTitle as DTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Plus, Upload, RefreshCw, Play, RotateCcw, Flame, ChevronDown, Loader2, Key, Pencil, Trash2, Zap, FlaskConical, Lock, Shield } from "lucide-react";
+import { Plus, Upload, RefreshCw, Play, RotateCcw, Flame, ChevronDown, ChevronRight, Loader2, Key, Pencil, Trash2, Zap, FlaskConical, Lock, Shield, Users, AlertTriangle, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useWsEvent } from "@/hooks/useWebSocket";
+import ProviderIcon, { providerGradients } from "@/components/dashboard/ProviderIcon";
 import {
   completeCodexOAuthCallbackUrl,
   createAccount,
@@ -62,6 +63,15 @@ function labelProvider(provider: string) {
   if (provider === "qoder") return "Qoder";
   return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
+
+const providerColors: Record<string, string> = {
+  kiro: "#38bdf8",
+  "kiro-pro": "#818cf8",
+  codebuddy: "#f472b6",
+  canva: "#a78bfa",
+  codex: "#34d399",
+  qoder: "#fbbf24",
+};
 
 export default function Accounts() {
   const navigate = useNavigate();
@@ -129,7 +139,6 @@ export default function Accounts() {
       setSettingsMap(settingsRes?.data || {});
       updateWarmupQueue(warmupQueueRes);
 
-      // Load BYOK providers
       const byokRes = await fetchByokProviders();
       setByokProviders(byokRes.providers || []);
     } catch (err) {
@@ -602,7 +611,6 @@ export default function Accounts() {
         models,
       };
 
-      // Only include api_key if user entered a new one (not the masked placeholder)
       if (byokForm.api_key && byokForm.api_key.trim() && byokForm.api_key !== BYOK_KEY_PLACEHOLDER) {
         updateData.api_key = byokForm.api_key;
       }
@@ -625,7 +633,7 @@ export default function Accounts() {
     setByokForm({
       label: provider.label,
       base_url: provider.base_url,
-      api_key: BYOK_KEY_PLACEHOLDER, // Show masked indicator that key exists
+      api_key: BYOK_KEY_PLACEHOLDER,
       format: provider.format,
       models: provider.models.join(", "),
     });
@@ -705,6 +713,13 @@ export default function Accounts() {
     });
   }, [accounts]);
 
+  // Summary totals
+  const totalAccounts = accounts.length;
+  const totalActive = accounts.filter((a) => a.status === "active").length;
+  const totalExhausted = accounts.filter((a) => a.status === "exhausted").length;
+  const totalError = accounts.filter((a) => a.status === "error").length;
+  const totalPending = accounts.filter((a) => a.status === "pending").length;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -714,335 +729,353 @@ export default function Accounts() {
           <p className="text-sm text-[var(--muted-foreground)] mt-1">Manage provider accounts</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleLoginAll}>
-            <Play className="w-4 h-4 mr-2" /> Login Pending
-          </Button>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--secondary)] hover:border-[var(--primary)]/30 transition-all disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+          <button
+            onClick={handleLoginAll}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)]/20 transition-all"
+          >
+            <Play className="w-3.5 h-3.5" /> Login Pending
+          </button>
         </div>
       </div>
 
       {/* Messages */}
       {(message || error) && (
-        <div className={`rounded-md p-3 text-sm ${message ? "bg-[var(--success)]/10 text-[var(--success)]" : "bg-[var(--error)]/10 text-[var(--error)]"}`}>
+        <div className={`rounded-lg p-3 text-sm border ${message ? "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20" : "bg-[var(--error)]/10 text-[var(--error)] border-[var(--error)]/20"}`}>
           {message || error}
         </div>
       )}
 
-      {/* Queue status - Login only */}
-      {(Number(queue?.active || 0) > 0 || Number(queue?.queued || 0) > 0) && (
-        <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3 text-xs text-[var(--muted-foreground)]">
-          Login: {Number(queue?.active || 0)} running, {Number(queue?.queued || 0)} queued
+      {/* Summary Bar */}
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-[var(--muted-foreground)]" />
+            <span className="text-sm font-medium text-[var(--foreground)]">{totalAccounts} accounts</span>
+          </div>
+          <div className="h-4 w-px bg-[var(--border)] hidden sm:block" />
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-[var(--success)]/10">
+              <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
+              <span className="text-[var(--success)] font-semibold">{totalActive}</span>
+              <span className="text-[var(--success)]/80">Active</span>
+            </span>
+            {totalExhausted > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-[var(--warning)]/10">
+                <span className="w-2 h-2 rounded-full bg-[var(--warning)]" />
+                <span className="text-[var(--warning)] font-semibold">{totalExhausted}</span>
+                <span className="text-[var(--warning)]/80">Exhausted</span>
+              </span>
+            )}
+            {totalError > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-[var(--error)]/10">
+                <span className="w-2 h-2 rounded-full bg-[var(--error)]" />
+                <span className="text-[var(--error)] font-semibold">{totalError}</span>
+                <span className="text-[var(--error)]/80">Error</span>
+              </span>
+            )}
+            {totalPending > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-[var(--secondary)]">
+                <span className="w-2 h-2 rounded-full bg-[var(--muted-foreground)]" />
+                <span className="text-[var(--foreground)] font-semibold">{totalPending}</span>
+                <span className="text-[var(--muted-foreground)]">Pending</span>
+              </span>
+            )}
+          </div>
+          {/* Queue status */}
+          {(Number(queue?.active || 0) > 0 || Number(queue?.queued || 0) > 0) && (
+            <>
+              <div className="h-4 w-px bg-[var(--border)] hidden sm:block" />
+              <span className="text-xs text-[var(--info)]">
+                <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+                Login: {Number(queue?.active || 0)} running, {Number(queue?.queued || 0)} queued
+              </span>
+            </>
+          )}
         </div>
-      )}
-
-      {/* Provider cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {providerStats.map((stat) => (
-          <Card
-            key={stat.provider}
-            className="border-[var(--border)] cursor-pointer hover:border-[var(--primary)]/50 transition-colors"
-            onClick={() => navigate(`/accounts/${stat.provider}`)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{labelProvider(stat.provider)}</CardTitle>
-                <span className="text-xs text-[var(--muted-foreground)]">{stat.total} accounts</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Status grid */}
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-md bg-[var(--secondary)] p-2">
-                  <p className="text-lg font-bold text-[var(--success)]">{stat.active}</p>
-                  <p className="text-[10px] text-[var(--muted-foreground)]">Active</p>
-                </div>
-                <div className="rounded-md bg-[var(--secondary)] p-2">
-                  <p className="text-lg font-bold text-[var(--warning)]">{stat.exhausted}</p>
-                  <p className="text-[10px] text-[var(--muted-foreground)]">Exhausted</p>
-                </div>
-                <div className="rounded-md bg-[var(--secondary)] p-2">
-                  <p className="text-lg font-bold text-[var(--warning)]">{stat.pending}</p>
-                  <p className="text-[10px] text-[var(--muted-foreground)]">Pending</p>
-                </div>
-                <div className="rounded-md bg-[var(--secondary)] p-2">
-                  <p className="text-lg font-bold text-[var(--error)]">{stat.error}</p>
-                  <p className="text-[10px] text-[var(--muted-foreground)]">Error</p>
-                </div>
-              </div>
-
-              {/* Credits remaining */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="text-[var(--muted-foreground)]">Credits</span>
-                  <span className="text-[var(--foreground)]">
-                    {stat.credits.remaining.toFixed(1)} / {stat.credits.total.toFixed(1)} remaining
-                  </span>
-                </div>
-                <Progress
-                  value={stat.credits.total > 0 ? Math.round((stat.credits.remaining / stat.credits.total) * 100) : 0}
-                  className="h-2"
-                />
-              </div>
-
-              {/* WarmUp progress - hide when completed */}
-              {warmupProgress[stat.provider] && warmupProgress[stat.provider].completed < warmupProgress[stat.provider].total && (
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-[var(--muted-foreground)]">WarmUp</span>
-                    <span className="text-[var(--foreground)]">
-                      {warmupProgress[stat.provider].completed} / {warmupProgress[stat.provider].total} completed
-                    </span>
-                  </div>
-                  <Progress
-                    value={warmupProgress[stat.provider].total > 0 ? Math.round((warmupProgress[stat.provider].completed / warmupProgress[stat.provider].total) * 100) : 0}
-                    className="h-2"
-                  />
-                </div>
-              )}
-
-              {/* Auto WarmUp toggle + countdown */}
-              <div
-                className="flex items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--secondary)]/40 p-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Flame className={`h-4 w-4 shrink-0 ${autoWarmupEnabledFor(stat.provider) ? "text-[var(--warning)]" : "text-[var(--muted-foreground)]"}`} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-[var(--foreground)] leading-tight">Auto WarmUp</p>
-                    <p className="text-[10px] text-[var(--muted-foreground)] leading-tight">
-                      {autoWarmupEnabledFor(stat.provider)
-                        ? autoWarmup?.nextRunAt
-                          ? `Next in ${countdownLabel()} · every ${autoWarmup.intervalMinutes}m`
-                          : `Every ${autoWarmup?.intervalMinutes ?? 15}m`
-                        : "Disabled"}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleToggleAutoWarmup(stat.provider)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                    autoWarmupEnabledFor(stat.provider) ? "bg-[var(--primary)]" : "bg-[var(--border)]"
-                  }`}
-                  aria-label={`Toggle auto warmup for ${labelProvider(stat.provider)}`}
-                >
-                  <span
-                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                      autoWarmupEnabledFor(stat.provider) ? "translate-x-5" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Buttons */}
-              <div className="grid grid-cols-3 gap-2" onClick={(e) => e.stopPropagation()}>
-                <Button className="w-full" variant="default" size="sm" onClick={() => handleOpenAddDialog(stat.provider)}>
-                  <Plus className="mr-1 h-4 w-4" /> Add
-                </Button>
-                <Button className="w-full" variant="outline" size="sm" onClick={() => handleWarmupProvider(stat.provider)} disabled={Boolean(warmupProgress[stat.provider])}>
-                  <RefreshCw className="mr-1 h-4 w-4" /> Warmup
-                </Button>
-                <Button className="w-full" variant="outline" size="sm" onClick={() => handleRetryErrors(stat.provider)} disabled={stat.error === 0}>
-                  <RotateCcw className="mr-1 h-4 w-4" /> Retry
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
-      {/* BYOK Providers Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
-              <Key className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--foreground)]">Custom Providers (BYOK)</h2>
-              <p className="text-sm text-[var(--muted-foreground)]">Bring Your Own Key — use your own API providers</p>
-            </div>
-          </div>
-          <Button onClick={() => setByokDialogOpen(true)} className="gap-2 shadow-sm">
-            <Plus className="h-4 w-4" /> Add Provider
-          </Button>
-        </div>
+      {/* Provider Cards - 2x3 grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {providerStats.map((stat) => {
+          const color = providerColors[stat.provider] || "#6b7280";
+          const gradient = providerGradients[stat.provider] || "from-gray-500/10 to-gray-600/5";
+          const quotaPercent = stat.credits.total > 0
+            ? Math.round((stat.credits.remaining / stat.credits.total) * 100)
+            : 0;
+          const isWarmingUp = warmupProgress[stat.provider] && warmupProgress[stat.provider].completed < warmupProgress[stat.provider].total;
 
-        {byokProviders.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[var(--primary)]/20 bg-[var(--primary)]/[0.02] p-10 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)]/10">
-              <Shield className="h-7 w-7 text-[var(--primary)]" />
-            </div>
-            <p className="text-sm font-medium text-[var(--foreground)]">No custom providers configured yet</p>
-            <p className="text-xs text-[var(--muted-foreground)] mt-1.5 mb-4">Connect your own API provider to use custom models with your keys</p>
-            <Button size="sm" onClick={() => setByokDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" /> Add Your First Provider
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {byokProviders.map((provider) => (
-              <Card key={provider.id} className="border-[var(--border)] overflow-hidden hover:border-[var(--primary)]/50 transition-all duration-200">
-                <CardHeader
-                  className="pb-3 cursor-pointer hover:bg-[var(--secondary)]/30 transition-colors"
-                  onClick={() => setExpandedByokId(expandedByokId === provider.id ? null : provider.id)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-base">{provider.label}</CardTitle>
-                        <Badge
-                          variant={provider.status === "active" ? "default" : "secondary"}
-                          className={provider.status === "active"
-                            ? "bg-[var(--primary)]/15 text-[var(--primary)] border border-[var(--primary)]/30"
-                            : "bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/30"
-                          }
-                        >
-                          {provider.status === "active" ? "● Active" : "○ Inactive"}
-                        </Badge>
+          return (
+            <Card
+              key={stat.provider}
+              className="border-[var(--border)] group hover:border-[var(--primary)]/40 hover:shadow-lg hover:shadow-[var(--primary)]/5 transition-all duration-200 cursor-pointer overflow-hidden"
+              onClick={() => navigate(`/accounts/${stat.provider}`)}
+            >
+              <CardContent className="p-0">
+                {/* Gradient header with icon */}
+                <div className={`bg-gradient-to-r ${gradient} px-4 pt-4 pb-3`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 rounded-lg bg-[var(--card)] shadow-sm border border-[var(--border)]/50">
+                        <ProviderIcon provider={stat.provider} size={22} />
                       </div>
-                      <p className="text-xs text-[var(--muted-foreground)] mt-1 truncate">{provider.base_url}</p>
+                      <div>
+                        <span className="text-sm font-bold text-[var(--foreground)]">{labelProvider(stat.provider)}</span>
+                        <div className="text-[11px] text-[var(--muted-foreground)]">{stat.total} accounts</div>
+                      </div>
                     </div>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 text-[var(--muted-foreground)] ${expandedByokId === provider.id ? "rotate-180" : ""}`} />
+                    <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)] group-hover:text-[var(--primary)] group-hover:translate-x-0.5 transition-all" />
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--muted-foreground)]">Format</span>
-                      <span className="text-[var(--foreground)] font-medium">{provider.format}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--muted-foreground)]">Models</span>
-                      <span className="text-[var(--foreground)] font-medium">{provider.models.length}</span>
-                    </div>
+                </div>
+
+                <div className="px-4 pb-4 pt-3 space-y-3">
+                  {/* Status pills */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--success)]/10 text-[var(--success)] font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
+                      {stat.active} Active
+                    </span>
+                    {stat.exhausted > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--warning)]/10 text-[var(--warning)] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--warning)]" />
+                        {stat.exhausted} Exhausted
+                      </span>
+                    )}
+                    {stat.error > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--error)]/10 text-[var(--error)] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--error)]" />
+                        {stat.error} Error
+                      </span>
+                    )}
+                    {stat.pending > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted-foreground)]" />
+                        {stat.pending} Pending
+                      </span>
+                    )}
                   </div>
 
-                  <div className="space-y-1.5">
-                    <p className="text-xs text-[var(--muted-foreground)]">Available Models</p>
-                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                      {provider.available_models?.slice(0, 10).map((model) => (
-                        <Badge key={model} variant="outline" className="text-xs border-[var(--primary)]/20 text-[var(--primary)]/80 bg-[var(--primary)]/[0.05] font-mono">
-                          {model}
-                        </Badge>
-                      ))}
-                      {provider.available_models && provider.available_models.length > 10 && (
-                        <Badge variant="outline" className="text-xs bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/30 font-medium">
-                          +{provider.available_models.length - 10} more
-                        </Badge>
+                  {/* Quota bar */}
+                  {stat.credits.total > 0 && (
+                    <div className="space-y-1">
+                      <div className="h-2 rounded-full bg-[var(--secondary)] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${quotaPercent}%`,
+                            backgroundColor: quotaPercent < 20 ? "var(--error)" : quotaPercent < 50 ? "var(--warning)" : color,
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
+                        <span>{stat.credits.remaining.toFixed(1)} remaining</span>
+                        <span>{quotaPercent}%</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* WarmUp progress */}
+                  {isWarmingUp && (
+                    <div className="flex items-center gap-2 text-[11px] text-[var(--info)] bg-[var(--info)]/5 rounded-md px-2 py-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Warmup {warmupProgress[stat.provider].completed}/{warmupProgress[stat.provider].total}</span>
+                    </div>
+                  )}
+
+                  {/* Auto WarmUp + Actions */}
+                  <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]/50" onClick={(e) => e.stopPropagation()}>
+                    {/* Auto warmup toggle */}
+                    <div className="flex items-center gap-2">
+                      <Flame className={`h-3.5 w-3.5 ${autoWarmupEnabledFor(stat.provider) ? "text-[var(--warning)]" : "text-[var(--muted-foreground)]"}`} />
+                      <span className="text-[11px] text-[var(--muted-foreground)]">
+                        {autoWarmupEnabledFor(stat.provider)
+                          ? autoWarmup?.nextRunAt ? countdownLabel() : "On"
+                          : "Off"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAutoWarmup(stat.provider)}
+                        className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
+                          autoWarmupEnabledFor(stat.provider) ? "bg-[var(--primary)]" : "bg-[var(--border)]"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            autoWarmupEnabledFor(stat.provider) ? "translate-x-3.5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Action buttons — pill style */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenAddDialog(stat.provider)}
+                        title="Add account"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-colors"
+                      >
+                        <Plus className="h-3 w-3" /> Add
+                      </button>
+                      <button
+                        onClick={() => handleWarmupProvider(stat.provider)}
+                        disabled={Boolean(warmupProgress[stat.provider])}
+                        title="Warmup all"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[var(--info)]/10 text-[var(--info)] hover:bg-[var(--info)]/20 transition-colors disabled:opacity-40"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Warmup
+                      </button>
+                      {stat.error > 0 && (
+                        <button
+                          onClick={() => handleRetryErrors(stat.provider)}
+                          title="Retry errors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[var(--error)]/10 text-[var(--error)] hover:bg-[var(--error)]/20 transition-colors"
+                        >
+                          <RotateCcw className="h-3 w-3" /> Retry
+                        </button>
                       )}
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[var(--border)]/50">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-[var(--foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]"
+      {/* BYOK Providers Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-[var(--primary)]/10">
+              <ProviderIcon provider="byok" size={18} />
+            </div>
+            <h2 className="text-sm font-semibold text-[var(--foreground)]">Custom Providers (BYOK)</h2>
+            <Badge variant="secondary" className="text-[10px]">{byokProviders.length}</Badge>
+          </div>
+          <button
+            onClick={() => setByokDialogOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 border border-[var(--primary)]/20 transition-all hover:shadow-sm"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Provider
+          </button>
+        </div>
+
+        {byokProviders.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-[var(--border)] p-8 text-center">
+            <Shield className="h-8 w-8 text-[var(--muted-foreground)] mx-auto mb-2" />
+            <p className="text-sm text-[var(--muted-foreground)]">No custom providers yet</p>
+            <Button size="sm" variant="outline" onClick={() => setByokDialogOpen(true)} className="mt-3 gap-1.5">
+              <Plus className="h-3.5 w-3.5" /> Add Provider
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {byokProviders.map((provider) => (
+              <Card key={provider.id} className="border-[var(--border)] hover:border-[var(--primary)]/40 transition-all">
+                <CardContent className="p-4 space-y-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${provider.status === "active" ? "bg-[var(--success)]" : "bg-[var(--warning)]"}`} />
+                      <span className="text-sm font-semibold text-[var(--foreground)]">{provider.label}</span>
+                    </div>
+                    <Badge
+                      variant={provider.status === "active" ? "success" : "warning"}
+                      className="text-[10px] px-1.5 py-0"
+                    >
+                      {provider.status}
+                    </Badge>
+                  </div>
+
+                  {/* Info */}
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-[var(--muted-foreground)] truncate">{provider.base_url}</p>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <span className="text-[var(--muted-foreground)]">{provider.format}</span>
+                      <span className="text-[var(--muted-foreground)]">·</span>
+                      <span className="text-[var(--foreground)]">{provider.models.length} models</span>
+                    </div>
+                  </div>
+
+                  {/* Models preview */}
+                  <div className="flex flex-wrap gap-1">
+                    {provider.models.slice(0, 3).map((model) => (
+                      <Badge key={model} variant="outline" className="text-[10px] font-mono px-1.5 py-0">
+                        {model}
+                      </Badge>
+                    ))}
+                    {provider.models.length > 3 && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        +{provider.models.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Actions — pill buttons */}
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-[var(--border)]/50">
+                    <button
                       onClick={() => handleEditByok(provider)}
+                      className="inline-flex items-center gap-1 flex-1 justify-center px-2 py-1 rounded-full text-[11px] font-medium bg-[var(--secondary)] text-[var(--foreground)] hover:bg-[var(--secondary)]/80 transition-colors"
                     >
-                      <Pencil className="h-3.5 w-3.5" /> Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 border-[var(--info)]/30 text-[var(--info)] hover:bg-[var(--info)]/10 hover:text-[var(--info)]"
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                    <button
                       onClick={() => handleTestByok(provider.id, provider.label)}
+                      className="inline-flex items-center gap-1 flex-1 justify-center px-2 py-1 rounded-full text-[11px] font-medium bg-[var(--info)]/10 text-[var(--info)] hover:bg-[var(--info)]/20 transition-colors"
                     >
-                      <Zap className="h-3.5 w-3.5" /> Test
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error)]/10 hover:text-[var(--error)]"
+                      <Zap className="h-3 w-3" /> Test
+                    </button>
+                    <button
                       onClick={() => handleDeleteByok(provider.id, provider.label)}
+                      className="inline-flex items-center gap-1 flex-1 justify-center px-2 py-1 rounded-full text-[11px] font-medium bg-[var(--error)]/10 text-[var(--error)] hover:bg-[var(--error)]/20 transition-colors"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </Button>
+                      <Trash2 className="h-3 w-3" /> Del
+                    </button>
                   </div>
-                </CardContent>
 
-                {expandedByokId === provider.id && (
-                  <div className="border-t border-[var(--border)] p-4 bg-[var(--secondary)]/[0.06]">
-                    <TooltipProvider>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 mb-3">
-                          <FlaskConical className="h-4 w-4 text-[var(--info)]" />
-                          <h4 className="text-sm font-medium text-[var(--foreground)]">
-                            Test Models
-                          </h4>
-                          <span className="text-xs text-[var(--muted-foreground)] bg-[var(--secondary)] px-1.5 py-0.5 rounded">
-                            {provider.models.length}
-                          </span>
-                        </div>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {provider.models.map((model) => {
-                            const key = `${provider.id}-${model}`;
-                            const result = byokTestResults.get(key);
-
-                            return (
-                              <div
-                                key={model}
-                                className={`flex items-center justify-between p-2.5 rounded-md bg-[var(--card)] border transition-colors hover:border-[var(--primary)]/30 ${
-                                  result?.status === 'success'
-                                    ? 'border-[var(--success)]/30'
-                                    : result?.status === 'error'
-                                    ? 'border-[var(--error)]/30'
-                                    : 'border-[var(--border)]'
-                                }`}
-                              >
-                                <Badge variant="outline" className="font-mono text-xs border-[var(--primary)]/20 text-[var(--primary)]/80 bg-[var(--primary)]/[0.05]">
-                                  {model}
-                                </Badge>
-
-                                <div className="flex items-center gap-2">
-                                  {result?.status === 'testing' && (
-                                    <>
-                                      <Loader2 className="h-3 w-3 animate-spin text-[var(--primary)]" />
-                                      <span className="text-xs text-[var(--muted-foreground)]">Testing...</span>
-                                    </>
-                                  )}
-
-                                  {result?.status === 'success' && (
-                                    <span className="inline-flex items-center gap-1 text-xs text-[var(--success)] font-medium bg-[var(--success)]/10 px-2 py-0.5 rounded-full">
-                                      ✓ {result.latencyMs}ms
-                                    </span>
-                                  )}
-
-                                  {result?.status === 'error' && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="inline-flex items-center gap-1 text-xs text-[var(--error)] cursor-help bg-[var(--error)]/10 px-2 py-0.5 rounded-full">
-                                          ✗ Error
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p className="max-w-xs text-xs">{result.error}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  )}
-
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2.5 text-xs gap-1 border-[var(--info)]/30 text-[var(--info)] hover:bg-[var(--info)]/10 hover:text-[var(--info)]"
-                                    disabled={result?.status === 'testing'}
-                                    onClick={() => handleTestByokModel(provider.id, model)}
-                                  >
-                                    <Zap className="h-3 w-3" />
-                                    {result?.status === 'testing' ? '...' : 'Test'}
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                  {/* Expandable test section */}
+                  {expandedByokId === provider.id && (
+                    <div className="border-t border-[var(--border)] pt-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <FlaskConical className="h-3.5 w-3.5 text-[var(--info)]" />
+                        <span className="text-xs font-medium">Test Models</span>
                       </div>
-                    </TooltipProvider>
-                  </div>
-                )}
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                        {provider.models.map((model) => {
+                          const key = `${provider.id}-${model}`;
+                          const result = byokTestResults.get(key);
+                          return (
+                            <div key={model} className="flex items-center justify-between p-2 rounded bg-[var(--secondary)]/50 text-xs">
+                              <span className="font-mono text-[var(--foreground)]">{model}</span>
+                              <div className="flex items-center gap-2">
+                                {result?.status === 'testing' && <Loader2 className="h-3 w-3 animate-spin text-[var(--primary)]" />}
+                                {result?.status === 'success' && <span className="text-[var(--success)]">✓ {result.latencyMs}ms</span>}
+                                {result?.status === 'error' && <span className="text-[var(--error)]">✗</span>}
+                                <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" disabled={result?.status === 'testing'} onClick={() => handleTestByokModel(provider.id, model)}>
+                                  Test
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Toggle expand */}
+                  <button
+                    onClick={() => setExpandedByokId(expandedByokId === provider.id ? null : provider.id)}
+                    className="w-full text-center text-[10px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+                  >
+                    {expandedByokId === provider.id ? "Hide tests ▲" : "Test models ▼"}
+                  </button>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -1066,10 +1099,8 @@ export default function Accounts() {
             </div>
           </DialogHeader>
           <div className="space-y-4 pt-3">
-            {/* Connection Settings */}
             <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/[0.06] p-3.5">
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Connection</p>
-
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--foreground)]">Provider Name</label>
                 <Input
@@ -1079,11 +1110,7 @@ export default function Accounts() {
                   readOnly={byokEditId !== null}
                   className={`focus:ring-1 focus:ring-[var(--ring)] ${byokEditId ? 'bg-[var(--muted)] opacity-60' : ''}`}
                 />
-                <p className="text-xs text-[var(--muted-foreground)]">
-                  {byokEditId ? 'Prefix cannot be changed after creation' : 'Used as model prefix (e.g., "openrouter-gpt-4")'}
-                </p>
               </div>
-
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--foreground)]">Base URL</label>
                 <Input
@@ -1095,20 +1122,13 @@ export default function Accounts() {
               </div>
             </div>
 
-            {/* Authentication */}
             <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/[0.06] p-3.5">
               <div className="flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Authentication</p>
               </div>
-
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[var(--foreground)] flex items-center gap-2">
-                  API Key
-                  {byokEditId && (
-                    <span className="inline-flex items-center gap-1 text-xs text-[var(--success)] font-normal bg-[var(--success)]/10 px-1.5 py-0.5 rounded-full">✓ Saved</span>
-                  )}
-                </label>
+                <label className="text-sm font-medium text-[var(--foreground)]">API Key</label>
                 <Input
                   type="password"
                   value={byokForm.api_key}
@@ -1121,16 +1141,12 @@ export default function Accounts() {
                   placeholder={byokEditId ? 'Enter new key to replace, or leave blank' : 'sk-...'}
                   className="focus:ring-1 focus:ring-[var(--ring)]"
                 />
-                {byokEditId && (
-                  <p className="text-xs text-[var(--muted-foreground)]">Leave blank to keep existing API key</p>
-                )}
+                {byokEditId && <p className="text-xs text-[var(--muted-foreground)]">Leave blank to keep existing key</p>}
               </div>
             </div>
 
-            {/* Model Configuration */}
             <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/[0.06] p-3.5">
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Configuration</p>
-
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--foreground)]">API Format</label>
                 <select
@@ -1143,7 +1159,6 @@ export default function Accounts() {
                   <option value="anthropic">Anthropic</option>
                 </select>
               </div>
-
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--foreground)]">Models</label>
                 <textarea
@@ -1157,15 +1172,9 @@ export default function Accounts() {
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button variant="outline" onClick={handleCloseByokDialog} className="text-[var(--muted-foreground)]">
-                Cancel
-              </Button>
-              <Button onClick={byokEditId ? handleUpdateByok : handleAddByok} className="gap-2 shadow-sm">
-                {byokEditId ? (
-                  <><Pencil className="h-4 w-4" /> Update Provider</>
-                ) : (
-                  <><Plus className="h-4 w-4" /> Add Provider</>
-                )}
+              <Button variant="outline" onClick={handleCloseByokDialog}>Cancel</Button>
+              <Button onClick={byokEditId ? handleUpdateByok : handleAddByok} className="gap-2">
+                {byokEditId ? <><Pencil className="h-4 w-4" /> Update</> : <><Plus className="h-4 w-4" /> Add</>}
               </Button>
             </div>
           </div>
@@ -1265,7 +1274,6 @@ export default function Accounts() {
                   className="mt-1 w-full h-40 rounded-md border border-[var(--border)] bg-[var(--background)] p-3 text-sm font-mono text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)] resize-none"
                   placeholder="qd-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 />
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">Paste Qoder Personal Access Token. Server akan menukar dengan jobToken otomatis dan menyimpan kredensial untuk inference.</p>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setAddDialogProvider(null)}>Cancel</Button>
@@ -1277,7 +1285,7 @@ export default function Accounts() {
           {addMode === "pat" && addDialogProvider === "codex" && (
             <div className="space-y-3">
               <div className="rounded-md border border-[var(--border)] bg-[var(--secondary)]/30 p-3 text-sm text-[var(--muted-foreground)]">
-                Login Codex bisa via popup OpenAI atau mode manual: generate auth URL, buka, lalu paste callback URL.
+                Login Codex via popup OpenAI atau mode manual.
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -1306,11 +1314,6 @@ export default function Accounts() {
                     />
                   </div>
 
-                  <div className="rounded-md bg-[var(--secondary)]/30 p-3 text-xs text-[var(--muted-foreground)] space-y-1.5">
-                    <p><span className="text-[var(--foreground)]">Callback:</span> <code className="break-all">{codexLoopbackUrl}</code></p>
-                    <p><span className="text-[var(--foreground)]">Contoh:</span> <code className="break-all">{codexCallbackExample}</code></p>
-                  </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <label className="text-sm text-[var(--foreground)]">Callback URL</label>
@@ -1324,7 +1327,7 @@ export default function Accounts() {
                     />
                     <div className="flex justify-end">
                       <Button size="sm" onClick={handleCodexOAuthSubmitManual} disabled={codexOauthBusy || !codexCallbackReady}>
-                        {codexOauthBusy ? "Completing OAuth..." : "Submit Callback URL"}
+                        Submit Callback URL
                       </Button>
                     </div>
                   </div>
@@ -1337,18 +1340,17 @@ export default function Accounts() {
             </div>
           )}
 
-          {/* Instant Login mode (Kiro Pro only) */}
+          {/* Instant Login mode */}
           {addMode === "instant" && (addDialogProvider === "kiro-pro" || addDialogProvider === "codex") && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-[var(--foreground)]">Refresh Tokens (satu per baris)</label>
+                <label className="text-sm text-[var(--foreground)]">Refresh Tokens (one per line)</label>
                 <textarea
                   value={instantTokens}
                   onChange={(e) => setInstantTokens(e.target.value)}
                   className="mt-1 w-full h-40 rounded-md border border-[var(--border)] bg-[var(--background)] p-3 text-sm font-mono text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)] resize-none"
-                  placeholder={"eyJhbGciOiJSUzI1NiIs...\neyJhbGciOiJSUzI1NiIs...\neyJhbGciOiJSUzI1NiIs..."}
+                  placeholder={"eyJhbGciOiJSUzI1NiIs...\neyJhbGciOiJSUzI1NiIs..."}
                 />
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">Paste refresh token per baris. Email otomatis di-extract dari token.</p>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setAddDialogProvider(null)}>Cancel</Button>
@@ -1357,11 +1359,11 @@ export default function Accounts() {
             </div>
           )}
 
-          {/* Bulk mode (all providers) */}
+          {/* Bulk mode */}
           {addMode === "bulk" && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-[var(--foreground)]">Accounts (email|password per baris)</label>
+                <label className="text-sm text-[var(--foreground)]">Accounts (email|password per line)</label>
                 <textarea
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
@@ -1369,26 +1371,19 @@ export default function Accounts() {
                   placeholder={"email@example.com|password123\nanother@example.com|pass456"}
                 />
               </div>
-              <div>
-                <label className="text-sm text-[var(--foreground)]">Browser Engine</label>
-                <select value={bulkBrowserEngine} onChange={(e) => setBulkBrowserEngine(e.target.value)} className="mt-1 w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)]">
-                  <option value="camoufox">Camoufox (Anti-detect, default)</option>
-                  <option value="chromium">Chromium (Playwright)</option>
+              <div className="flex flex-wrap gap-3 items-center">
+                <select value={bulkBrowserEngine} onChange={(e) => setBulkBrowserEngine(e.target.value)} className="h-8 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs text-[var(--foreground)]">
+                  <option value="camoufox">Camoufox</option>
+                  <option value="chromium">Chromium</option>
                 </select>
-              </div>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm text-[var(--foreground)]">
-                  <input type="checkbox" checked={bulkHeadless} onChange={(e) => setBulkHeadless(e.target.checked)} className="h-4 w-4 rounded border-[var(--border)]" />
-                  Run browser headless
+                <label className="flex items-center gap-1.5 text-xs text-[var(--foreground)]">
+                  <input type="checkbox" checked={bulkHeadless} onChange={(e) => setBulkHeadless(e.target.checked)} className="h-3.5 w-3.5 rounded border-[var(--border)]" />
+                  Headless
                 </label>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-[var(--foreground)]">Concurrent:</label>
-                  <select value={bulkConcurrency} onChange={(e) => setBulkConcurrency(Number(e.target.value))} className="h-8 w-16 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-sm text-[var(--foreground)]">
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
-                    <option value={3}>3</option>
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-[var(--muted-foreground)]">×</span>
+                  <select value={bulkConcurrency} onChange={(e) => setBulkConcurrency(Number(e.target.value))} className="h-8 w-14 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs text-[var(--foreground)]">
+                    {[1, 2, 3, 5, 10].map((n) => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </div>
               </div>
@@ -1399,7 +1394,7 @@ export default function Accounts() {
             </div>
           )}
 
-          {/* Single mode (all providers) */}
+          {/* Single mode */}
           {addMode === "single" && (
             <div className="space-y-4">
               <div>
@@ -1410,17 +1405,16 @@ export default function Accounts() {
                 <label className="text-sm text-[var(--foreground)]">Password</label>
                 <Input value={addForm.password} onChange={(e) => setAddForm({ ...addForm, password: e.target.value })} type="password" placeholder="********" className="mt-1" />
               </div>
-              <div>
-                <label className="text-sm text-[var(--foreground)]">Browser Engine</label>
-                <select value={addForm.browserEngine} onChange={(e) => setAddForm({ ...addForm, browserEngine: e.target.value })} className="mt-1 w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)]">
-                  <option value="camoufox">Camoufox (Anti-detect, default)</option>
-                  <option value="chromium">Chromium (Playwright)</option>
+              <div className="flex flex-wrap gap-3 items-center">
+                <select value={addForm.browserEngine} onChange={(e) => setAddForm({ ...addForm, browserEngine: e.target.value })} className="h-8 rounded-md border border-[var(--border)] bg-[var(--background)] px-2 text-xs text-[var(--foreground)]">
+                  <option value="camoufox">Camoufox</option>
+                  <option value="chromium">Chromium</option>
                 </select>
+                <label className="flex items-center gap-1.5 text-xs text-[var(--foreground)]">
+                  <input type="checkbox" checked={addForm.headless} onChange={(e) => setAddForm({ ...addForm, headless: e.target.checked })} className="h-3.5 w-3.5 rounded border-[var(--border)]" />
+                  Headless
+                </label>
               </div>
-              <label className="flex items-center gap-2 text-sm text-[var(--foreground)]">
-                <input type="checkbox" checked={addForm.headless} onChange={(e) => setAddForm({ ...addForm, headless: e.target.checked })} className="h-4 w-4 rounded border-[var(--border)]" />
-                Run browser headless
-              </label>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setAddDialogProvider(null)}>Cancel</Button>
                 <Button onClick={handleAdd}>Add Account</Button>

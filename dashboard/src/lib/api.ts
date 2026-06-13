@@ -4,8 +4,10 @@ function resolveApiBase(): string {
   if (!port || port === "443" || port === "80") {
     return window.location.origin;
   }
-  const backendPort = import.meta.env.VITE_BACKEND_PORT || (Number(port) - 1) || "1930";
-  return `http://${window.location.hostname}:${backendPort}`;
+  const configuredPort = import.meta.env.VITE_BACKEND_PORT;
+  if (configuredPort) return `http://${window.location.hostname}:${configuredPort}`;
+  // Single-port mode: dashboard and API share the same port
+  return window.location.origin;
 }
 
 export const API_BASE = resolveApiBase();
@@ -18,8 +20,9 @@ export function getWsBase(): string {
   if (!port || port === "443" || port === "80") {
     return `${protocol}://${window.location.hostname}`;
   }
-  const backendPort = import.meta.env.VITE_BACKEND_PORT || (Number(port) - 1) || "1930";
-  return `${protocol}://${window.location.hostname}:${backendPort}`;
+  const configuredPort = import.meta.env.VITE_BACKEND_PORT;
+  if (configuredPort) return `${protocol}://${window.location.hostname}:${configuredPort}`;
+  return `${protocol}://${window.location.hostname}:${port}`;
 }
 
 function getApiKey(): string {
@@ -299,22 +302,24 @@ export async function fetchIntegrationClients(): Promise<IntegrationClientsData>
 export async function fetchClientConfigPreview(
   clientId: string,
   baseUrl: string,
-  modelId?: string
+  modelId?: string,
+  modelIds?: string[]
 ): Promise<ClientConfigPreviewDTO> {
   return fetchApi(`/api/integration/clients/${clientId}/preview`, {
     method: "POST",
-    body: JSON.stringify({ baseUrl, modelId }),
+    body: JSON.stringify({ baseUrl, modelId, modelIds }),
   });
 }
 
 export async function applyClientConfig(
   clientId: string,
   baseUrl: string,
-  modelId?: string
+  modelId?: string,
+  modelIds?: string[]
 ): Promise<ApplyClientResult> {
   return fetchApi(`/api/integration/clients/${clientId}/apply`, {
     method: "POST",
-    body: JSON.stringify({ baseUrl, modelId }),
+    body: JSON.stringify({ baseUrl, modelId, modelIds }),
   });
 }
 

@@ -1,7 +1,7 @@
-# Etteum Pool installer for Windows
+# RAI Pool installer for Windows
 #
 # One-command install (PowerShell):
-#   irm https://raw.githubusercontent.com/priyo000/etteum-pool/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/mrifki2204/rai-pool/main/install.ps1 | iex
 #
 # Or, after cloning:
 #   powershell -ExecutionPolicy Bypass -File install.ps1
@@ -10,8 +10,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$RepoUrl     = if ($env:ETTEUM_REPO) { $env:ETTEUM_REPO } else { "https://github.com/priyo000/etteum-pool.git" }
-$DefaultDir  = if ($env:ETTEUM_HOME) { $env:ETTEUM_HOME } else { Join-Path $HOME "etteum-pool" }
+$RepoUrl     = if ($env:RAI_REPO) { $env:RAI_REPO } else { "https://github.com/mrifki2204/rai-pool.git" }
+$DefaultDir  = if ($env:RAI_HOME) { $env:RAI_HOME } else { Join-Path $HOME "rai-pool" }
 
 function Step([string]$msg) { Write-Host "==> " -ForegroundColor Cyan -NoNewline; Write-Host $msg -ForegroundColor White }
 function Info([string]$msg) { Write-Host "    $msg" }
@@ -23,7 +23,7 @@ function Have([string]$cmd) { return [bool](Get-Command $cmd -ErrorAction Silent
 
 function Show-Summary {
     Write-Host ""
-    Write-Host "Etteum Pool" -ForegroundColor Cyan -NoNewline
+    Write-Host "RAI Pool" -ForegroundColor Cyan -NoNewline
     Write-Host " — AI Proxy Pool for Multiple Providers" -ForegroundColor White
     Write-Host ""
 
@@ -174,7 +174,7 @@ function Clone-Or-Update-Repo {
   $script:ProjectDir = $null
   if (Test-Path "package.json") {
     $pkg = Get-Content "package.json" -Raw
-    if ($pkg -match '"name"\s*:\s*"etteum-pool"') {
+    if ($pkg -match '"name"\s*:\s*"rai-pool"') {
       $script:ProjectDir = (Get-Location).Path
       Step "Using existing checkout: $($script:ProjectDir)"
       if (Test-Path ".git") {
@@ -375,22 +375,22 @@ function Install-CliSymlink {
     New-Item -ItemType Directory -Path $target -Force | Out-Null
   }
 
-  # Copy etteum.ps1 and etteum.cmd to target
-  $srcPs1 = Join-Path $script:ProjectDir "etteum.ps1"
-  $srcCmd = Join-Path $script:ProjectDir "etteum.cmd"
+  # Copy rai.ps1 and rai.cmd to target
+  $srcPs1 = Join-Path $script:ProjectDir "rai.ps1"
+  $srcCmd = Join-Path $script:ProjectDir "rai.cmd"
 
   if (Test-Path $srcPs1) {
-    Copy-Item $srcPs1 (Join-Path $target "etteum.ps1") -Force
+    Copy-Item $srcPs1 (Join-Path $target "rai.ps1") -Force
   } else {
-    Warn "etteum.ps1 not found at $srcPs1"
+    Warn "rai.ps1 not found at $srcPs1"
   }
   if (Test-Path $srcCmd) {
-    Copy-Item $srcCmd (Join-Path $target "etteum.cmd") -Force
+    Copy-Item $srcCmd (Join-Path $target "rai.cmd") -Force
   } else {
-    Warn "etteum.cmd not found at $srcCmd"
+    Warn "rai.cmd not found at $srcCmd"
   }
 
-  Ok "Installed etteum command to $target"
+  Ok "Installed rai command to $target"
 
   if (-not ($env:Path -split ';' | Where-Object { $_ -eq $target })) {
     Warn "Add to PATH: `$env:Path = `"$target;`$env:Path`""
@@ -399,7 +399,7 @@ function Install-CliSymlink {
 
 function Main {
   Write-Host ""
-  Write-Host "Etteum Pool Installer (Windows)" -ForegroundColor Blue
+  Write-Host "RAI Pool Installer (Windows)" -ForegroundColor Blue
   Write-Host ""
 
   Show-Summary
@@ -420,13 +420,13 @@ function Main {
   Write-Host ""
   Write-Host "✓ Installation complete!" -ForegroundColor Green
   Write-Host ""
-  Write-Host "Etteum Pool is installed at: $($script:ProjectDir)" -ForegroundColor White
+  Write-Host "RAI Pool is installed at: $($script:ProjectDir)" -ForegroundColor White
   Write-Host ""
 
   Write-Host "Quick Start:" -ForegroundColor White -BackgroundColor DarkBlue
   Write-Host ""
   Write-Host "  1. Start the server:" -ForegroundColor Cyan
-  Write-Host "     .\etteum.ps1 start"
+  Write-Host "     .\rai.ps1 start"
   Write-Host ""
   Write-Host "  2. Open the dashboard:" -ForegroundColor Cyan
   Write-Host "     http://localhost:1931"
@@ -436,10 +436,10 @@ function Main {
 
   Write-Host "Useful Commands:" -ForegroundColor White -BackgroundColor DarkBlue
   Write-Host ""
-  Write-Host "  .\etteum.ps1 status     # Check server status"
-  Write-Host "  .\etteum.ps1 logs       # View server logs"
-  Write-Host "  .\etteum.ps1 stop       # Stop the server"
-  Write-Host "  .\etteum.ps1 restart    # Restart the server"
+  Write-Host "  .\rai.ps1 status     # Check server status"
+  Write-Host "  .\rai.ps1 logs       # View server logs"
+  Write-Host "  .\rai.ps1 stop       # Stop the server"
+  Write-Host "  .\rai.ps1 restart    # Restart the server"
   Write-Host ""
 
   Write-Host "Tip: re-run this installer any time to pull updates and rebuild." -ForegroundColor Gray

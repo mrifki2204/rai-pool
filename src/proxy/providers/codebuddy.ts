@@ -304,6 +304,10 @@ export class CodeBuddyProvider extends BaseProvider {
             error: "Content moderation: Your input was flagged as potentially sensitive. Please rephrase your message."
           };
         }
+        // 400 with code 11101 = invalid API key / token expired — mark as auth error
+        if (response.status === 400 && errText.includes("11101")) {
+          return { success: false, error: "CodeBuddy API key revoked or invalid (11101)" };
+        }
         return { success: false, error: `CodeBuddy API error (${response.status}): ${errText}` };
       }
 
@@ -354,6 +358,10 @@ export class CodeBuddyProvider extends BaseProvider {
             success: false,
             error: "Content moderation: Your input was flagged as potentially sensitive. Please rephrase your message."
           };
+        }
+        // 400 with code 11101 = invalid API key / token expired — mark as auth error
+        if (response.status === 400 && errText.includes("11101")) {
+          return { success: false, error: "CodeBuddy API key revoked or invalid (11101)" };
         }
         return { success: false, error: `CodeBuddy API error (${response.status}): ${errText}` };
       }
@@ -742,12 +750,20 @@ export class CodeBuddyProvider extends BaseProvider {
       body.tools = this.normalizeTools(request.tools);
     }
     if (request.tool_choice) {
-      body.tool_choice = request.tool_choice;
+      // CodeBuddy only accepts string tool_choice ("auto", "none", "required")
+      // Convert object format {"type":"function","function":{"name":"..."}} to "auto"
+      if (typeof request.tool_choice === "string") {
+        body.tool_choice = request.tool_choice;
+      } else if (typeof request.tool_choice === "object") {
+        // Object means "force specific tool" — map to "required" for CodeBuddy
+        body.tool_choice = "required";
+      }
     }
 
     if (isThinking) {
       body.reasoning = { effort: "high" };
     }
+
 
     // Use a longer timeout for streaming requests — large context (Claude Code)
     // can cause CodeBuddy to take > 2 minutes before the first token arrives.

@@ -33,14 +33,14 @@ export default function UsageChart({ data = defaultData, colorsByModel = {} }: U
 
   if (data.length === 0) {
     return (
-      <div className="h-[300px] w-full flex items-center justify-center rounded-lg bg-[var(--secondary)] text-sm text-[var(--muted-foreground)]">
+      <div className="h-[220px] w-full flex items-center justify-center rounded-lg bg-[var(--secondary)] text-sm text-[var(--muted-foreground)]">
         No usage data yet
       </div>
     );
   }
 
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-[220px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>

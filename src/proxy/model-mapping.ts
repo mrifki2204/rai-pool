@@ -91,8 +91,8 @@ export async function loadModelMappingCache(): Promise<void> {
   masterEnabled = setting?.value == null ? true : setting.value !== "false";
 }
 
-export function invalidateModelMappingCache(): void {
-  loadModelMappingCache().catch((e) => console.error("[ModelMapping] reload failed", e));
+export async function invalidateModelMappingCache(): Promise<void> {
+  await loadModelMappingCache().catch((e) => console.error("[ModelMapping] reload failed", e));
 }
 
 export function getModelMappingsCached(): ModelMapping[] {

@@ -131,7 +131,7 @@ export async function exists(path: string): Promise<boolean> {
 
 export async function backupIfExists(path: string): Promise<string[]> {
   if (!(await exists(path))) return [];
-  const backupPath = `${path}.etteum-backup-${Date.now()}`;
+  const backupPath = `${path}.rai-backup-${Date.now()}`;
   await copyFile(path, backupPath);
   return [backupPath];
 }

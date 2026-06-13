@@ -10,9 +10,11 @@
  *   DASHBOARD_PORT (default: 1931)
  */
 
+import path from "path";
+
 const port = Number(process.env.DASHBOARD_PORT) || 1931;
-const distDir = new URL("../dashboard/dist", import.meta.url).pathname;
-const indexFile = `${distDir}/index.html`;
+const distDir = path.resolve(import.meta.dir, "..", "dashboard", "dist");
+const indexFile = path.join(distDir, "index.html");
 
 // Check if dashboard is built
 if (!(await Bun.file(indexFile).exists())) {

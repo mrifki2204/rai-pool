@@ -55,9 +55,9 @@ export async function configureKilo(
   try {
     const config = info.preview ? {} : await readJsonObject(configPath);
     const provider = ensureObjectField(config, "provider");
-    provider.etteum = {
+    provider.rai = {
       npm: "@ai-sdk/openai-compatible",
-      name: "Etteum Pool",
+      name: "RAI Pool",
       options: {
         baseURL: info.openaiBaseUrl,
         apiKey: info.apiKey,
@@ -73,15 +73,15 @@ export async function configureKilo(
         ? config.$schema
         : "https://app.kilo.ai/config.json";
     const defaultModel = resolveDefaultModel(info);
-    config.model = `etteum/${defaultModel}`;
-    if (typeof config.small_model !== "string" || config.small_model.startsWith("etteum/")) {
-      config.small_model = `etteum/${defaultModel}`;
+    config.model = `rai/${defaultModel}`;
+    if (typeof config.small_model !== "string" || config.small_model.startsWith("rai/")) {
+      config.small_model = `rai/${defaultModel}`;
     }
     if (
       Array.isArray(config.enabled_providers) &&
-      !config.enabled_providers.includes("etteum")
+      !config.enabled_providers.includes("rai")
     ) {
-      config.enabled_providers = [...(config.enabled_providers as string[]), "etteum"];
+      config.enabled_providers = [...(config.enabled_providers as string[]), "rai"];
     }
 
     const backupPaths = info.preview ? [] : await writeJsonObject(configPath, config);

@@ -110,7 +110,7 @@ integrationRouter.put("/", async (c) => {
     await setMasterEnabled(body.enabled);
   }
 
-  invalidateModelMappingCache();
+  await invalidateModelMappingCache();
   broadcast({ type: "model_mappings_updated", data: {} });
 
   const mappings = await db.select().from(modelMappings).orderBy(asc(modelMappings.priority));
@@ -138,8 +138,11 @@ integrationRouter.post("/apply-config", async (c) => {
     const apiKey = apiKeyRow[0]?.value || process.env.API_KEY || "pool-proxy-secret-key";
 
     // Use frontend-provided base URL, fall back to localhost with config port
+    // Strip /v1 suffix and trailing slashes so Claude CLI appends its own paths
     const { config } = await import("../config");
-    const baseUrl = body.baseUrl || `http://localhost:${config.port}`;
+    const baseUrl = (body.baseUrl || `http://localhost:${config.port}`)
+      .replace(/\/v1\/?$/, "")
+      .replace(/\/+$/, "");
 
     // Target: ~/.claude/settings.json
     const homeDir = os.homedir();
@@ -172,11 +175,9 @@ integrationRouter.post("/apply-config", async (c) => {
       env: envVars,
     };
 
-    // Ensure directory exists and write atomically (write tmp then rename)
+    // Ensure directory exists and write to file
     await fs.mkdir(claudeDir, { recursive: true });
-    const tmpPath = settingsPath + ".tmp";
-    await fs.writeFile(tmpPath, JSON.stringify(newSettings, null, 2) + "\n", "utf-8");
-    await fs.rename(tmpPath, settingsPath);
+    await fs.writeFile(settingsPath, JSON.stringify(newSettings, null, 2) + "\n", "utf-8");
 
     return c.json({
       success: true,
@@ -204,6 +205,7 @@ integrationRouter.post("/apply-config", async (c) => {
 async function buildProxyInfo(body: {
   baseUrl?: string;
   modelId?: string;
+  modelIds?: string[];
 }): Promise<ProxyConnectionInfo> {
   const { config } = await import("../config");
   const apiKeyRow = await db
@@ -217,7 +219,7 @@ async function buildProxyInfo(body: {
   const modelId = body.modelId || "kp-sonnet-4.6";
 
   // Build lightweight model list for config generators
-  const models = getAllModels().map((m) => ({
+  const allModels = getAllModels().map((m) => ({
     id: m.id,
     name: m.id,
     maxInputTokens: m.context_window ?? 200000,
@@ -228,6 +230,10 @@ async function buildProxyInfo(body: {
         ? ["text"]
         : ["text"],
   }));
+
+  // If modelIds provided, filter to only those models
+  const selectedIds = body.modelIds && body.modelIds.length > 0 ? new Set(body.modelIds) : null;
+  const models = selectedIds ? allModels.filter((m) => selectedIds.has(m.id)) : allModels;
 
   return { proxyOrigin, openaiBaseUrl, apiKey, modelId, models };
 }
@@ -254,6 +260,8 @@ integrationRouter.get("/clients", async (c) => {
 
 /**
  * POST /api/integration/clients/:clientId/preview - preview config without writing.
+ * If no modelIds provided, reads the existing config from disk (shows current state).
+ * If modelIds provided, generates a preview with only those models.
  */
 integrationRouter.post("/clients/:clientId/preview", async (c) => {
   const clientId = c.req.param("clientId") as ClientTarget;
@@ -263,6 +271,18 @@ integrationRouter.post("/clients/:clientId/preview", async (c) => {
 
   try {
     const body = await c.req.json().catch(() => ({}));
+
+    // If no modelIds specified, read existing config from disk
+    if (!body.modelIds || body.modelIds.length === 0) {
+      const { readExistingConfig } = await import("../lib/client-configs/paths");
+      try {
+        const existing = await readExistingConfig(clientId);
+        if (existing) {
+          return c.json({ client: clientId, success: true, preview: existing, paths: [], backupPaths: [] });
+        }
+      } catch { /* fall through to generate */ }
+    }
+
     const info = await buildProxyInfo(body);
     info.preview = true;
     const result = await generateClientConfig(clientId, info);
@@ -315,7 +335,7 @@ integrationRouter.post("/apply-all", async (c) => {
 
 /**
  * POST /api/integration/clients/:clientId/restore - restore config from backup.
- * Looks for the most recent .etteum-backup-* file and copies it back.
+ * Looks for the most recent .rai-backup-* file and copies it back.
  */
 integrationRouter.post("/clients/:clientId/restore", async (c) => {
   const clientId = c.req.param("clientId") as ClientTarget;
@@ -341,7 +361,7 @@ integrationRouter.post("/clients/:clientId/restore", async (c) => {
     }
 
     const backups = files
-      .filter((f) => f.startsWith(pathMod.basename(configPath) + ".etteum-backup-"))
+      .filter((f) => f.startsWith(pathMod.basename(configPath) + ".rai-backup-"))
       .sort()
       .reverse();
 

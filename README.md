@@ -1,4 +1,4 @@
-# Etteum Pool
+# RAI Pool
 
 **AI Proxy Pool for Multiple Providers** — Load balancing, auto-warmup, and credit tracking for Kiro, CodeBuddy, Codex, Canva, and Qoder accounts.
 
@@ -28,12 +28,12 @@
 
 **Linux/macOS:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/priyo000/etteum-pool/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mrifki2204/rai-pool/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/priyo000/etteum-pool/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/mrifki2204/rai-pool/main/install.ps1 | iex
 ```
 
 The installer will:
@@ -48,7 +48,7 @@ The installer will:
 ### Start the Server
 
 ```bash
-etteum start
+rai start
 ```
 
 ### Access the Dashboard
@@ -72,8 +72,8 @@ If you prefer manual installation:
 
 ```bash
 # Clone the repository
-git clone https://github.com/priyo000/etteum-pool.git
-cd etteum-pool
+git clone https://github.com/mrifki2204/rai-pool.git
+cd rai-pool
 
 # Install Bun (if not installed)
 curl -fsSL https://bun.sh/install | bash
@@ -102,7 +102,7 @@ cd dashboard && bun run build && cd ..
 bun src/db/migrate.ts
 
 # Start the server
-etteum start
+rai start
 ```
 
 ---
@@ -112,14 +112,14 @@ etteum start
 ### CLI Commands
 
 ```bash
-etteum start          # Start server in background
-etteum stop           # Stop server
-etteum restart        # Restart server
-etteum status         # Check server status
-etteum logs           # View server logs
-etteum build          # Rebuild dashboard and restart
-etteum dev            # Run in development mode (with hot reload)
-etteum migrate        # Run database migrations
+rai start          # Start server in background
+rai stop           # Stop server
+rai restart        # Restart server
+rai status         # Check server status
+rai logs           # View server logs
+rai build          # Rebuild dashboard and restart
+rai dev            # Run in development mode (with hot reload)
+rai migrate        # Run database migrations
 ```
 
 ### Adding Accounts
@@ -206,7 +206,7 @@ KIRO_PRO_UPGRADE=true        # Enable Kiro Pro features
 ### How It Works
 
 ```
-User Request → Etteum API → Load Balancer → Provider → Response
+User Request → RAI API → Load Balancer → Provider → Response
                   ↓
             Dashboard (WebSocket updates)
                   ↓
@@ -256,7 +256,7 @@ curl http://localhost:1930/api/stats \
 ### Project Structure
 
 ```
-etteum-pool/
+rai-pool/
 ├── src/
 │   ├── api/              # API routes (Hono)
 │   ├── auth/             # Login automation & warmup
@@ -272,7 +272,7 @@ etteum-pool/
 ├── scripts/
 │   ├── auth/             # Python browser automation
 │   └── production.ts     # Production server
-└── etteum                # CLI script
+└── rai                   # CLI script
 ```
 
 ### Running in Development Mode
@@ -292,7 +292,7 @@ bun run dev
 cd dashboard
 bun run build
 cd ..
-./etteum start
+./rai start
 ```
 
 ---
@@ -344,20 +344,20 @@ Re-run the installer to pull latest changes:
 
 ```bash
 # Linux/macOS
-curl -fsSL https://raw.githubusercontent.com/priyo000/etteum-pool/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mrifki2204/rai-pool/main/install.sh | bash
 
 # Windows
-irm https://raw.githubusercontent.com/priyo000/etteum-pool/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/mrifki2204/rai-pool/main/install.ps1 | iex
 ```
 
 Or manually:
 
 ```bash
-cd ~/etteum-pool
+cd ~/rai-pool
 git pull
 bun install
 cd dashboard && bun install && bun run build && cd ..
-etteum restart
+rai restart
 ```
 
 ---
@@ -370,8 +370,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/priyo000/etteum-pool/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/priyo000/etteum-pool/discussions)
+- **Issues**: [GitHub Issues](https://github.com/mrifki2204/rai-pool/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mrifki2204/rai-pool/discussions)
 
 ---
 

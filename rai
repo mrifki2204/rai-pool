@@ -1,6 +1,6 @@
 #!/bin/bash
-# etteum - PoolProx3 management CLI
-# Usage: etteum [start|stop|restart|status|logs|build|dev|migrate]
+# rai - PoolProx3 management CLI
+# Usage: rai [start|stop|restart|status|logs|build|dev|migrate]
 #
 # SAFETY: this CLI manages ONLY the poolprox3 instance it ships with.
 # It tracks its own process group via a PID file and kills only that
@@ -18,8 +18,8 @@ while [ -L "$SCRIPT_PATH" ]; do
 done
 PROJECT_DIR=$(cd -P "$(dirname "$SCRIPT_PATH")" >/dev/null 2>&1 && pwd)
 
-PID_FILE="$PROJECT_DIR/.etteum.pid"
-LOG_FILE="$PROJECT_DIR/.etteum.log"
+PID_FILE="$PROJECT_DIR/.rai.pid"
+LOG_FILE="$PROJECT_DIR/.rai.log"
 ENV_FILE="$PROJECT_DIR/.env"
 START_CMD_MATCH="scripts/production.ts"   # used to verify a PID before killing
 
@@ -62,7 +62,7 @@ rotate_log() {
 
 do_start() {
   if pid=$(running_pid); then
-    echo "✅ etteum already running (PID $pid)"
+    echo "✅ rai already running (PID $pid)"
     echo "   Backend:   http://localhost:$API_PORT"
     echo "   Dashboard: http://localhost:$DASH_PORT"
     return 0
@@ -79,7 +79,7 @@ do_start() {
   fi
 
   rotate_log
-  echo "Starting etteum (poolprox3)..."
+  echo "Starting rai (poolprox3)..."
   cd "$PROJECT_DIR"
   # setsid → new session/process group so 'stop' can target ONLY our subtree.
   setsid bun scripts/production.ts --skip-build >> "$LOG_FILE" 2>&1 &
@@ -88,10 +88,10 @@ do_start() {
   sleep 1.5
 
   if kill -0 "$pid" 2>/dev/null; then
-    echo "✅ etteum started (PID $pid)"
+    echo "✅ rai started (PID $pid)"
     echo "   Backend:   http://localhost:$API_PORT"
     echo "   Dashboard: http://localhost:$DASH_PORT"
-    echo "   Logs:      etteum logs"
+    echo "   Logs:      rai logs"
   else
     rm -f "$PID_FILE"
     echo "❌ Failed to start. Last log lines:"
@@ -103,14 +103,14 @@ do_start() {
 do_stop() {
   local pid
   if ! pid=$(running_pid); then
-    echo "⏹️  etteum is not running (nothing to stop)"
+    echo "⏹️  rai is not running (nothing to stop)"
     return 0
   fi
 
   # Kill ONLY this PID's process group — never a global pattern match.
   local pgid
   pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
-  echo "Stopping etteum (PID $pid, group $pgid)..."
+  echo "Stopping rai (PID $pid, group $pgid)..."
   if [ -n "$pgid" ]; then
     kill -TERM -"$pgid" 2>/dev/null || true
     local i=0
@@ -121,26 +121,26 @@ do_stop() {
     fi
   fi
   rm -f "$PID_FILE"
-  echo "⏹️  etteum stopped"
+  echo "⏹️  rai stopped"
 }
 
 do_status() {
   if pid=$(running_pid); then
     local pgid
     pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
-    echo "✅ etteum is running (PID $pid, group $pgid)"
+    echo "✅ rai is running (PID $pid, group $pgid)"
     echo "   Backend:   http://localhost:$API_PORT  $(port_in_use "$API_PORT" && echo '(listening)' || echo '(not listening yet)')"
     echo "   Dashboard: http://localhost:$DASH_PORT  $(port_in_use "$DASH_PORT" && echo '(listening)' || echo '(not listening yet)')"
   else
-    echo "⏹️  etteum is not running"
+    echo "⏹️  rai is not running"
   fi
 }
 
 usage() {
   cat <<EOF
-etteum — PoolProx3 management CLI
+rai — PoolProx3 management CLI
 
-Usage: etteum <command>
+Usage: rai <command>
 
   start      Start backend + dashboard in the background (ports $API_PORT/$DASH_PORT)
   stop       Stop this instance only (process-group scoped, safe for other instances)

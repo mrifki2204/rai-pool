@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Etteum Pool installer for Linux and macOS
+# RAI Pool installer for Linux and macOS
 #
 # One-command install:
-#   curl -fsSL https://raw.githubusercontent.com/priyo000/etteum-pool/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/mrifki2204/rai-pool/main/install.sh | bash
 #
 # Or, after cloning:
 #   bash install.sh
 
 set -euo pipefail
 
-REPO_URL="${ETTEUM_REPO:-https://github.com/priyo000/etteum-pool.git}"
-INSTALL_DIR_DEFAULT="${ETTEUM_HOME:-$HOME/etteum-pool}"
+REPO_URL="${RAI_REPO:-https://github.com/mrifki2204/rai-pool.git}"
+INSTALL_DIR_DEFAULT="${RAI_HOME:-$HOME/rai-pool}"
 
 C_RESET='\033[0m'
 C_BOLD='\033[1m'
@@ -47,7 +47,7 @@ have() { command -v "$1" >/dev/null 2>&1; }
 PYTHON_BIN=""
 
 show_summary() {
-  printf "\n${C_BOLD}${C_BLUE}Etteum Pool${C_RESET} — AI Proxy Pool for Multiple Providers\n\n"
+  printf "\n${C_BOLD}${C_BLUE}RAI Pool${C_RESET} — AI Proxy Pool for Multiple Providers\n\n"
 
   # Check what needs to be installed
   local needs_git=false needs_bun=false needs_python=false
@@ -184,7 +184,7 @@ ensure_venv_module() {
 }
 
 clone_or_update_repo() {
-  if [[ -f "package.json" ]] && grep -q '"name": "etteum-pool"' package.json 2>/dev/null; then
+  if [[ -f "package.json" ]] && grep -q '"name": "rai-pool"' package.json 2>/dev/null; then
     PROJECT_DIR="$(pwd)"
     step "Using existing checkout: $PROJECT_DIR"
     if [[ -d ".git" ]]; then
@@ -391,11 +391,11 @@ install_cli_symlink() {
   local target="$HOME/.local/bin"
   mkdir -p "$target"
 
-  # Link etteum command
-  ln -sf "$PROJECT_DIR/etteum" "$target/etteum"
-  chmod +x "$PROJECT_DIR/etteum"
+  # Link rai command
+  ln -sf "$PROJECT_DIR/rai" "$target/rai"
+  chmod +x "$PROJECT_DIR/rai"
 
-  ok "Linked $target/etteum -> $PROJECT_DIR/etteum"
+  ok "Linked $target/rai -> $PROJECT_DIR/rai"
 
   case ":$PATH:" in
     *":$target:"*) ;;
@@ -404,7 +404,7 @@ install_cli_symlink() {
 }
 
 main() {
-  printf "\n${C_BOLD}${C_BLUE}Etteum Pool Installer${C_RESET}  ${C_DIM}(%s)${C_RESET}\n" "$OS"
+  printf "\n${C_BOLD}${C_BLUE}RAI Pool Installer${C_RESET}  ${C_DIM}(%s)${C_RESET}\n" "$OS"
 
   show_summary
 
@@ -414,7 +414,7 @@ main() {
   clone_or_update_repo
 
   cd "$PROJECT_DIR"
-  chmod +x etteum 2>/dev/null || true
+  chmod +x rai 2>/dev/null || true
 
   write_env_if_missing
   install_node_deps
@@ -424,14 +424,14 @@ main() {
   install_cli_symlink
 
   printf "\n${C_GREEN}${C_BOLD}✓ Installation complete!${C_RESET}\n\n"
-  printf "Etteum Pool is installed at: ${C_BOLD}%s${C_RESET}\n\n" "$PROJECT_DIR"
+  printf "RAI Pool is installed at: ${C_BOLD}%s${C_RESET}\n\n" "$PROJECT_DIR"
 
   cat <<EOF
 ${C_BOLD}Quick Start:${C_RESET}
 
   1. Start the server:
-     ${C_CYAN}etteum start${C_RESET}
-     or: cd $PROJECT_DIR && ./etteum start
+     ${C_CYAN}rai start${C_RESET}
+     or: cd $PROJECT_DIR && ./rai start
 
   2. Open the dashboard:
      ${C_CYAN}http://localhost:1931${C_RESET}
@@ -440,10 +440,10 @@ ${C_BOLD}Quick Start:${C_RESET}
 
 ${C_BOLD}Useful Commands:${C_RESET}
 
-  etteum status     # Check server status
-  etteum logs       # View server logs
-  etteum stop       # Stop the server
-  etteum restart    # Restart the server
+  rai status     # Check server status
+  rai logs       # View server logs
+  rai stop       # Stop the server
+  rai restart    # Restart the server
 
 ${C_DIM}Tip: re-run this installer any time to pull updates and rebuild.${C_RESET}
 EOF

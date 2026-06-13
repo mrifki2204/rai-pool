@@ -10,7 +10,7 @@ AUTH="Authorization: Bearer $API_KEY"
 if curl -s -H "$AUTH" http://localhost:1930/api/accounts > /dev/null 2>&1; then
   echo "✅ Server already running on port 1930"
 else
-  echo "❌ Server not running. Please start with: ./etteum restart"
+  echo "❌ Server not running. Please start with: ./rai restart"
   exit 1
 fi
 echo ""

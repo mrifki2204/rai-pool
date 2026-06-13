@@ -31,7 +31,7 @@ const CLIENT_PRIMARY_PATHS: Record<ClientTarget, Record<NodeJS.Platform, string>
     linux: home(".codex", "config.toml"),
   },
   hermes: {
-    win32: home(".hermes", "config.yaml"),
+    win32: path.join(process.env.LOCALAPPDATA || home("AppData", "Local"), "hermes", "config.yaml"),
     darwin: home(".hermes", "config.yaml"),
     linux: home(".hermes", "config.yaml"),
   },
@@ -127,5 +127,30 @@ export function resolveExistingPath(clientId: ClientTarget, platform?: NodeJS.Pl
     }
     default:
       return getPrimaryConfigPath(clientId, plat);
+  }
+}
+
+/**
+ * Read the existing config file from disk and return parsed content.
+ * Returns null if file doesn't exist.
+ */
+export async function readExistingConfig(clientId: ClientTarget): Promise<Record<string, unknown> | null> {
+  const { readFileSync } = await import("node:fs");
+  const configPath = resolveExistingPath(clientId);
+  if (!existsSync(configPath)) return null;
+  const content = readFileSync(configPath, "utf-8");
+  // Handle YAML (hermes)
+  if (configPath.endsWith(".yaml") || configPath.endsWith(".yml")) {
+    return { yaml: content };
+  }
+  // Handle TOML (codex)
+  if (configPath.endsWith(".toml")) {
+    return { toml: content };
+  }
+  // JSON
+  try {
+    return JSON.parse(content);
+  } catch {
+    return { raw: content };
   }
 }

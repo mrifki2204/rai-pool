@@ -8,17 +8,17 @@ export const config = {
   apiKey: process.env.API_KEY || "pool-proxy-secret-key",
   databasePath: process.env.DATABASE_PATH || path.join(projectRoot, "data/poolprox3.db"),
   authScriptPath:
-    process.env.AUTH_SCRIPT_PATH ||
+    (process.env.AUTH_SCRIPT_PATH && path.resolve(projectRoot, process.env.AUTH_SCRIPT_PATH)) ||
     path.join(projectRoot, "scripts/auth/login.py"),
   pythonPath:
-    process.env.PYTHON_PATH ||
+    (process.env.PYTHON_PATH && path.resolve(projectRoot, process.env.PYTHON_PATH)) ||
     path.join(
       projectRoot,
       "scripts/auth/.venv",
       process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
     ),
   authScriptCwd:
-    process.env.AUTH_SCRIPT_CWD ||
+    (process.env.AUTH_SCRIPT_CWD && path.resolve(projectRoot, process.env.AUTH_SCRIPT_CWD)) ||
     path.join(projectRoot, "scripts/auth"),
   proxyUrl: process.env.PROXY_URL || "",
   encryptionKey:
