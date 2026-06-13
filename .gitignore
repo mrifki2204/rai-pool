@@ -56,8 +56,7 @@ drizzle/
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # ── Claude / AI assistant ────────────────────────────────────
-.claude/settings.local.json
-.claude/plans/
+.claude/
 
 # ── Caches ───────────────────────────────────────────────────
 .eslintcache
