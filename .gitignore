@@ -1,85 +1,79 @@
-# dependencies (bun install)
-node_modules
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
 
-# python venv
+# ── Python ────────────────────────────────────────────────────
 .venv/
 __pycache__/
 *.pyc
 
-# sensitive data
+# ── Build output ──────────────────────────────────────────────
+dashboard/dist/
+out/
+dist/
+*.tgz
+
+# ── Code coverage ────────────────────────────────────────────
+coverage/
+*.lcov
+
+# ── Environment ──────────────────────────────────────────────
+.env
+.env.*.local
+
+# ── Database ─────────────────────────────────────────────────
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# ── Logs & PID files ─────────────────────────────────────────
+*.log
+*.log.err
+.rai.pid
+.poolprox.pid
+.aiproxy.pid
+.etteum.pid
+
+# ── Sensitive data ───────────────────────────────────────────
 scripts/cookies/
 
-# local probe / intercept scripts (reverse-engineering helpers, not part of the proxy)
+# ── Local probe / intercept scripts ──────────────────────────
 scripts/probe-*.ts
 scripts/dump-*.ts
 scripts/qoder-intercept.mjs
 scripts/test-kiro-pro-inference.ts
 test/codex_direct.ts
 
-# output
-out
-dist
-*.tgz
+# ── Drizzle migrations ───────────────────────────────────────
+drizzle/
 
-# code coverage
-coverage
-*.lcov
-
-# logs & pid files
-logs
-_.log
-*.log
-.poolprox.log
-.poolprox.pid
-.rai.log
-.rai.pid
-.aiproxy.log
-.aiproxy.pid
+# ── Debug artifacts ──────────────────────────────────────────
+*.png
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# Claude Code local project overrides
+# ── Claude / AI assistant ────────────────────────────────────
 .claude/settings.local.json
+.claude/plans/
 
-# caches
+# ── Caches ───────────────────────────────────────────────────
 .eslintcache
 .cache
 *.tsbuildinfo
 
-# IntelliJ based IDEs
-.idea
+# ── IDE ──────────────────────────────────────────────────────
+.idea/
+.vscode/
 
-# Finder (MacOS) folder config
+# ── OS ───────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
 
-# Database
-data/
-*.sqlite
-*.sqlite-journal
-*.sqlite-wal
-*.sqlite-shm
-
-# Drizzle migrations
-drizzle/
-
-# Bun lockfile (optional - some prefer to commit this)
-# bun.lock
-
-# Debug artifacts
-*.png
-
-# Claude plans (local only)
-.claude/plans/
-
-
-# Playwright MCP runtime
+# ── Playwright MCP runtime ───────────────────────────────────
 .playwright-mcp/
 
-# Nested git repos (external services)
+# ── Nested git repos ─────────────────────────────────────────
 services/windsurf-api/
