@@ -263,7 +263,7 @@ write_env_if_missing() {
   fi
 
   # Ensure other required keys exist
-  for key_name in PORT DASHBOARD_PORT API_KEY DATABASE_PATH AUTH_SCRIPT_PATH AUTH_SCRIPT_CWD; do
+  for key_name in PORT API_KEY DATABASE_PATH AUTH_SCRIPT_PATH AUTH_SCRIPT_CWD; do
     if ! grep -q "^${key_name}=" .env; then
       local default_val
       default_val=$(grep "^${key_name}=" .env.example 2>/dev/null | cut -d= -f2- || echo "")
@@ -434,7 +434,7 @@ ${C_BOLD}Quick Start:${C_RESET}
      or: cd $PROJECT_DIR && ./rai start
 
   2. Open the dashboard:
-     ${C_CYAN}http://localhost:1931${C_RESET}
+     ${C_CYAN}http://localhost:2002${C_RESET}
 
   3. Add accounts via the dashboard UI
 

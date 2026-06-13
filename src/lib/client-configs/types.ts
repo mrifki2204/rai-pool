@@ -20,9 +20,9 @@ export interface ProxyClientModel {
 
 /** Core connection info passed to every generator. */
 export interface ProxyConnectionInfo {
-  /** Origin used for Anthropic-native clients (no /v1 suffix), e.g. http://localhost:1930 */
+  /** Origin used for Anthropic-native clients (no /v1 suffix), e.g. http://localhost:2002 */
   proxyOrigin: string;
-  /** Full OpenAI-compatible base URL, e.g. http://localhost:1930/v1 */
+  /** Full OpenAI-compatible base URL, e.g. http://localhost:2002/v1 */
   openaiBaseUrl: string;
   /** API key (Bearer token) for authentication */
   apiKey: string;

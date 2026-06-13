@@ -217,12 +217,10 @@ const server = Bun.serve({
 
 console.log(`
 ╔══════════════════════════════════════════════════╗
-║           🔄 Pool Proxy Server                   ║
+║           🤖 RAI Pool Server                     ║
 ╠══════════════════════════════════════════════════╣
-║  HTTP:      http://localhost:${config.port}               ║
+║  Server:    http://localhost:${config.port}               ║
 ║  WebSocket: ws://localhost:${config.port}/ws              ║
-║  Database:  SQLite                              ║
-║  Dashboard: http://localhost:${config.dashboardPort}              ║
 ╠══════════════════════════════════════════════════╣
 ║  Endpoints:                                      ║
 ║    POST /v1/chat/completions  (proxy)            ║

@@ -7,12 +7,12 @@
  *   bun run scripts/serve-dashboard.ts
  *
  * Env:
- *   DASHBOARD_PORT (default: 1931)
+ *   DASHBOARD_PORT (default: 2002)
  */
 
 import path from "path";
 
-const port = Number(process.env.DASHBOARD_PORT) || 1931;
+const port = Number(process.env.DASHBOARD_PORT) || 2002;
 const distDir = path.resolve(import.meta.dir, "..", "dashboard", "dist");
 const indexFile = path.join(distDir, "index.html");
 

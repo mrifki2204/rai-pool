@@ -1,6 +1,5 @@
 const root = new URL("..", import.meta.url).pathname;
-const port = process.env.PORT || "1930";
-const dashboardPort = process.env.DASHBOARD_PORT || "1931";
+const port = process.env.PORT || "2002";
 
 function spawnProcess(name: string, command: string[], cwd = root) {
   const proc = Bun.spawn(command, {
@@ -8,7 +7,6 @@ function spawnProcess(name: string, command: string[], cwd = root) {
     env: {
       ...process.env,
       PORT: port,
-      DASHBOARD_PORT: dashboardPort,
     },
     stdout: "pipe",
     stderr: "pipe",
@@ -63,10 +61,8 @@ function shutdown(code = 0) {
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 
-console.log(`\nPool Proxy starting...`);
-console.log(`Backend:   http://localhost:${port}`);
-console.log(`Dashboard: http://localhost:${dashboardPort}`);
-console.log(`API Key:   ${process.env.API_KEY || "pool-proxy-secret-key"}\n`);
+console.log(`\nRAI Pool starting (dev mode)...`);
+console.log(`Server: http://localhost:${port}\n`);
 
 children.push(spawnProcess("backend", [process.execPath, "src/index.ts"]));
 children.push(
@@ -77,7 +73,7 @@ children.push(
     "--host",
     "0.0.0.0",
     "--port",
-    dashboardPort,
+    "5173",
   ], `${root}/dashboard`)
 );
 

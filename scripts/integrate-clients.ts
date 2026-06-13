@@ -9,7 +9,7 @@
  *   bun scripts/integrate-clients.ts
  *       Interactive mode — detects clients, prompts for selection.
  *
- *   bun scripts/integrate-clients.ts --url http://localhost:1930 --key <KEY>
+ *   bun scripts/integrate-clients.ts --url http://localhost:2002 --key <KEY>
  *       Non-interactive — configures all detected clients.
  *
  *   bun scripts/integrate-clients.ts --url <URL> --key <KEY> --client claudeCode
@@ -22,7 +22,7 @@
  *       Restore all backups created by this tool.
  *
  * Options:
- *   --url <url>       Proxy base URL (default: http://localhost:1930)
+ *   --url <url>       Proxy base URL (default: http://localhost:2002)
  *   --key <key>       API key for authentication
  *   --model <id>      Default model ID (default: kp-sonnet-4.6)
  *   --client <id>     Configure specific client (repeatable)
@@ -59,7 +59,7 @@ interface Options {
 function parseArgs(): Options {
   const args = process.argv.slice(2);
   const opts: Options = {
-    url: "http://localhost:1930",
+    url: "http://localhost:2002",
     key: "",
     model: "kp-sonnet-4.6",
     clients: [],
@@ -268,7 +268,7 @@ Usage:
   bun scripts/integrate-clients.ts [options]
 
 Options:
-  --url <url>       Proxy base URL (default: http://localhost:1930)
+  --url <url>       Proxy base URL (default: http://localhost:2002)
   --key <key>       API key for authentication
   --model <id>      Default model ID (default: kp-sonnet-4.6)
   --client <id>     Configure specific client (repeatable)
@@ -281,7 +281,7 @@ Examples:
   bun scripts/integrate-clients.ts
 
   # Configure all detected clients
-  bun scripts/integrate-clients.ts --url http://localhost:1930 --key sk-my-key
+  bun scripts/integrate-clients.ts --url http://localhost:2002 --key sk-my-key
 
   # Configure only Claude Code and OpenCode
   bun scripts/integrate-clients.ts --client claudeCode --client opencode
@@ -308,7 +308,7 @@ Supported clients:
   const info = buildProxyInfo(opts);
 
   // Interactive mode: no URL/key provided, no specific clients
-  if (!opts.url || opts.url === "http://localhost:1930") {
+  if (!opts.url || opts.url === "http://localhost:2002") {
     // Check if we have enough args for non-interactive
     if (opts.clients.length === 0) {
       return interactiveMode(info);

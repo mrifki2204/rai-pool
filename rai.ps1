@@ -39,11 +39,11 @@ function Test-Running {
 }
 
 function Invoke-Start {
-  $port = Get-EnvValue "PORT" "1930"
+  $port = Get-EnvValue "PORT" "2002"
 
   if (Test-Running) {
     Write-Host "RAI already running (PID $(Get-Content $PidFile))" -ForegroundColor Yellow
-    Write-Host "  Dashboard: http://localhost:$port"
+    Write-Host "  Server: http://localhost:$port"
     return
   }
 
@@ -62,7 +62,7 @@ function Invoke-Start {
 
   if (-not $proc.HasExited) {
     Write-Host "RAI started (PID $($proc.Id))" -ForegroundColor Green
-    Write-Host "  Dashboard: http://localhost:$port"
+    Write-Host "  Server: http://localhost:$port"
     Write-Host "  API Key:   $(Get-EnvValue 'API_KEY' 'pool-proxy-secret-key')"
     Write-Host "  Logs:      .\rai.ps1 logs"
   } else {
@@ -81,11 +81,11 @@ function Invoke-Stop {
 }
 
 function Invoke-Status {
-  $port = Get-EnvValue "PORT" "1930"
+  $port = Get-EnvValue "PORT" "2002"
   if (Test-Running) {
     $procId = Get-Content $PidFile
     Write-Host "RAI is running (PID $procId)" -ForegroundColor Green
-    Write-Host "  Dashboard: http://localhost:$port"
+    Write-Host "  Server: http://localhost:$port"
   } else {
     Write-Host "RAI is not running" -ForegroundColor Red
   }

@@ -32,8 +32,7 @@ read_env() {
   echo "${val:-$def}"
 }
 
-API_PORT=$(read_env PORT 1930)
-DASH_PORT=$(read_env DASHBOARD_PORT 1931)
+API_PORT=$(read_env PORT 2002)
 
 # --- Is the tracked instance alive? PID file must point at OUR command ---
 running_pid() {
@@ -63,18 +62,13 @@ rotate_log() {
 do_start() {
   if pid=$(running_pid); then
     echo "✅ rai already running (PID $pid)"
-    echo "   Backend:   http://localhost:$API_PORT"
-    echo "   Dashboard: http://localhost:$DASH_PORT"
+    echo "   Server: http://localhost:$API_PORT"
     return 0
   fi
 
   if port_in_use "$API_PORT"; then
     echo "❌ Port $API_PORT already in use by another process. Aborting."
     echo "   (poolprox3 defaults to 1930/1931 — check 'ss -tlnp | grep $API_PORT')"
-    return 1
-  fi
-  if port_in_use "$DASH_PORT"; then
-    echo "❌ Port $DASH_PORT already in use by another process. Aborting."
     return 1
   fi
 
@@ -89,8 +83,7 @@ do_start() {
 
   if kill -0 "$pid" 2>/dev/null; then
     echo "✅ rai started (PID $pid)"
-    echo "   Backend:   http://localhost:$API_PORT"
-    echo "   Dashboard: http://localhost:$DASH_PORT"
+    echo "   Server: http://localhost:$API_PORT"
     echo "   Logs:      rai logs"
   else
     rm -f "$PID_FILE"
@@ -129,8 +122,7 @@ do_status() {
     local pgid
     pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
     echo "✅ rai is running (PID $pid, group $pgid)"
-    echo "   Backend:   http://localhost:$API_PORT  $(port_in_use "$API_PORT" && echo '(listening)' || echo '(not listening yet)')"
-    echo "   Dashboard: http://localhost:$DASH_PORT  $(port_in_use "$DASH_PORT" && echo '(listening)' || echo '(not listening yet)')"
+    echo "   Server: http://localhost:$API_PORT  $(port_in_use "$API_PORT" && echo '(listening)' || echo '(not listening yet)')"
   else
     echo "⏹️  rai is not running"
   fi
@@ -142,7 +134,7 @@ rai — PoolProx3 management CLI
 
 Usage: rai <command>
 
-  start      Start backend + dashboard in the background (ports $API_PORT/$DASH_PORT)
+  start      Start server in the background (port $API_PORT)
   stop       Stop this instance only (process-group scoped, safe for other instances)
   restart    Stop then start
   status     Show PID, group, and whether ports are listening

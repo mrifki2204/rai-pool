@@ -570,7 +570,7 @@ Once added, models are available with your prefix:
 
 ```bash
 # OpenRouter example
-curl http://localhost:1930/v1/chat/completions \
+curl http://localhost:2002/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -579,7 +579,7 @@ curl http://localhost:1930/v1/chat/completions \
   }'
 
 # Anthropic format provider
-curl http://localhost:1930/v1/messages \
+curl http://localhost:2002/v1/messages \
   -H "x-api-key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

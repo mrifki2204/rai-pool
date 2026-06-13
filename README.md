@@ -114,7 +114,7 @@ The installer automatically handles everything:
 rai start                    # Start the server
 ```
 
-Open **http://localhost:1931** → Add your accounts → Done! 🎉
+Open **http://localhost:2002** → Add your accounts → Done! 🎉
 
 ---
 
@@ -141,7 +141,7 @@ RAI Pool exposes an **OpenAI-compatible API** — drop it into any tool that sup
 ### Chat Completions
 
 ```bash
-curl http://localhost:1930/v1/chat/completions \
+curl http://localhost:2002/v1/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -154,7 +154,7 @@ curl http://localhost:1930/v1/chat/completions \
 ### List Available Models
 
 ```bash
-curl http://localhost:1930/v1/models \
+curl http://localhost:2002/v1/models \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -166,8 +166,7 @@ Copy `.env.example` to `.env` and customize:
 
 ```bash
 # ── Server ────────────────────────────────
-PORT=1930                    # API port
-DASHBOARD_PORT=1931          # Dashboard port
+PORT=2002                    # Server port (API + Dashboard)
 
 # ── Security ──────────────────────────────
 API_KEY=your-secret-key      # API authentication
@@ -188,8 +187,7 @@ PROXY_URL=                   # Global proxy for outbound requests
 
 | Variable | Default | Description |
 |:---------|:--------|:------------|
-| `PORT` | `1930` | Backend API port |
-| `DASHBOARD_PORT` | `1931` | Dashboard web UI port |
+| `PORT` | `2002` | Server port (API + Dashboard) |
 | `API_KEY` | `pool-proxy-secret-key` | API authentication key |
 | `ENCRYPTION_KEY` | auto-generated | 32-char hex key for encrypting tokens |
 | `DATABASE_PATH` | `./data/poolprox3.db` | SQLite database location |
@@ -341,12 +339,12 @@ bun src/db/migrate.ts
 
 ```bash
 # Check what's using the port
-lsof -i :1930          # macOS/Linux
-netstat -ano | findstr :1930  # Windows
+lsof -i :2002          # macOS/Linux
+netstat -ano | findstr :2002  # Windows
 
 # Change ports in .env
 PORT=1940
-DASHBOARD_PORT=1941
+PORT=2042
 ```
 
 </details>

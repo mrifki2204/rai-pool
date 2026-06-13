@@ -240,7 +240,7 @@ function Write-EnvIfMissing {
 
   # Ensure other required keys exist
   $envContent = Get-Content ".env" -Raw
-  $requiredKeys = @("PORT", "DASHBOARD_PORT", "API_KEY", "DATABASE_PATH", "AUTH_SCRIPT_PATH", "AUTH_SCRIPT_CWD")
+  $requiredKeys = @("PORT", "API_KEY", "DATABASE_PATH", "AUTH_SCRIPT_PATH", "AUTH_SCRIPT_CWD")
   foreach ($keyName in $requiredKeys) {
     if ($envContent -notmatch "(?m)^${keyName}=") {
       $defaultVal = ""
@@ -429,7 +429,7 @@ function Main {
   Write-Host "     .\rai.ps1 start"
   Write-Host ""
   Write-Host "  2. Open the dashboard:" -ForegroundColor Cyan
-  Write-Host "     http://localhost:1931"
+  Write-Host "     http://localhost:2002"
   Write-Host ""
   Write-Host "  3. Add accounts via the dashboard UI"
   Write-Host ""
